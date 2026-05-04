@@ -216,13 +216,14 @@
   .sesja .sesja-price{font-family:var(--mono);font-size:12px;color:var(--clay);text-align:right;letter-spacing:0.05em;padding-top:10px}
   .sesja .sesja-arrow{font-size:20px;color:var(--ink);text-align:right;padding-top:4px;transition:transform .3s}
   .sesja:hover .sesja-arrow{transform:translateX(8px);color:var(--clay)}
-  .sesja.feature{background:var(--ink);color:var(--paper);border:none;margin:24px 0}
-  .sesja.feature:hover{background:var(--terra)}
-  .sesja.feature .sesja-title{color:var(--paper)}
-  .sesja.feature .sesja-desc{color:rgba(247,240,223,0.8)}
-  .sesja.feature .sesja-meta{color:var(--ochre)}
-  .sesja.feature .sesja-num,.sesja.feature .sesja-price,.sesja.feature .sesja-arrow{color:var(--ochre)}
-  .sesja.feature .when{display:block;font-family:var(--serif);font-style:italic;color:var(--ochre);font-size:14px;margin-top:8px}
+  /* feature card: subtle clay-tinted gradient, ink text, clay border-left accent */
+  .sesja.feature{background:linear-gradient(180deg,rgba(179,91,53,0.05) 0%,rgba(179,91,53,0.11) 100%);border-top:1px solid rgba(179,91,53,0.18);border-bottom:1px solid rgba(179,91,53,0.18);border-left:2px solid var(--clay);padding-left:30px;margin:24px 0;transition:background .5s ease}
+  .sesja.feature:hover{background:linear-gradient(180deg,rgba(179,91,53,0.08) 0%,rgba(179,91,53,0.16) 100%);padding-left:46px}
+  .sesja.feature .sesja-title{color:var(--ink)}
+  .sesja.feature .sesja-desc{color:var(--ink-2)}
+  .sesja.feature .sesja-meta{color:var(--clay)}
+  .sesja.feature .sesja-num,.sesja.feature .sesja-price,.sesja.feature .sesja-arrow{color:var(--clay)}
+  .sesja.feature .when{display:block;font-family:var(--serif);font-style:italic;color:var(--terra);font-size:14px;margin-top:8px}
 
   /* Sesje ceremonialne - dashed-border, sacrum, brak CTA */
   .sesja.sesja--ceremony{border-top:1px dashed var(--clay);border-bottom:1px dashed var(--clay);cursor:default;opacity:0.85}
