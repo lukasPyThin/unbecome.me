@@ -545,9 +545,8 @@
     <div class="section-meta" style="justify-content:center;gap:14px"><span><span class="num">/04</span> &nbsp; napisz</span></div>
     <h2 class="reveal">Napisz <em>do mnie</em>.</h2>
     <p class="lead reveal">Nie musisz wiedzieć, czego szukasz - wystarczy, że czujesz, że coś Cię tu przyciągnęło.</p>
-    <form class="form" id="b-form" action="https://formspree.io/f/xdayqvyv" method="POST">
+    <form class="form" id="b-form" action="/api/contact" method="POST">
       <p style="position:absolute;left:-9999px"><label>Nie wypełniaj: <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
-      <input type="hidden" name="_subject" value="Wiadomość z unbecome.me">
       <div class="field">
         <label for="b-imie">Imię</label>
         <input type="text" id="b-imie" name="name" placeholder="jak się nazywasz?" autocomplete="given-name" required>
@@ -734,12 +733,28 @@
   }
   requestAnimationFrame(tickBox);
 
-  // form: native POST to Formspree, just show "wysyłam..." while it goes
+  // form: AJAX POST to CF Pages Function /api/contact (Resend backend)
   const form = document.getElementById('b-form');
   const status = document.getElementById('b-status');
-  form.addEventListener('submit',()=>{
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
     status.textContent = 'wysyłam...';
     status.classList.add('visible');
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.ok) {
+        status.textContent = 'dostałem Twoją wiadomość. odezwę się wkrótce.';
+        form.reset();
+      } else {
+        status.textContent = data.error || 'coś nie zadziałało. napisz bezpośrednio na lukasz@unbecome.me';
+      }
+    } catch (err) {
+      status.textContent = 'coś nie zadziałało. napisz bezpośrednio na lukasz@unbecome.me';
+    }
   });
 </script>
 </body>
