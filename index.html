@@ -234,17 +234,18 @@
   .sesje-list{display:flex;flex-direction:column}
   .sesja{display:grid;grid-template-columns:80px 1.5fr 2fr 1fr 40px;gap:28px;align-items:start;padding:36px 0;border-top:1px solid var(--line);cursor:pointer;transition:padding .4s ease}
   .sesja:last-child{border-bottom:1px solid var(--line)}
-  .sesja:hover{padding:48px 16px;background:rgba(255,255,255,0.4)}
+  /* hover only on devices with mouse (avoids tap-flicker on mobile) */
+  @media (hover: hover){.sesja:hover{padding:48px 16px;background:rgba(255,255,255,0.4)}}
   .sesja .sesja-num{font-family:var(--mono);font-size:11px;color:var(--clay);letter-spacing:0.15em;padding-top:6px}
   .sesja .sesja-title{font-family:var(--serif);font-weight:400;font-size:30px;line-height:1.05;letter-spacing:-0.015em;color:var(--ink)}
   .sesja .sesja-meta{font-family:var(--mono);font-size:11px;letter-spacing:0.12em;color:var(--soft);margin-top:8px;text-transform:uppercase}
   .sesja .sesja-desc{font-family:var(--serif);font-style:italic;font-weight:300;font-size:17px;line-height:1.5;color:var(--ink-2);padding-top:4px}
   .sesja .sesja-price{font-family:var(--mono);font-size:12px;color:var(--clay);text-align:right;letter-spacing:0.05em;padding-top:10px}
   .sesja .sesja-arrow{font-size:20px;color:var(--ink);text-align:right;padding-top:4px;transition:transform .3s}
-  .sesja:hover .sesja-arrow{transform:translateX(8px);color:var(--clay)}
+  @media (hover: hover){.sesja:hover .sesja-arrow{transform:translateX(8px);color:var(--clay)}}
   /* feature card: subtle clay-tinted gradient, ink text, clay border-left accent */
   .sesja.feature{background:linear-gradient(180deg,rgba(179,91,53,0.05) 0%,rgba(179,91,53,0.11) 100%);border-top:1px solid rgba(179,91,53,0.18);border-bottom:1px solid rgba(179,91,53,0.18);border-left:2px solid var(--clay);padding-left:30px;margin:24px 0;transition:background .5s ease}
-  .sesja.feature:hover{background:linear-gradient(180deg,rgba(179,91,53,0.08) 0%,rgba(179,91,53,0.16) 100%);padding-left:46px}
+  @media (hover: hover){.sesja.feature:hover{background:linear-gradient(180deg,rgba(179,91,53,0.08) 0%,rgba(179,91,53,0.16) 100%);padding-left:46px}}
   .sesja.feature .sesja-title{color:var(--ink)}
   .sesja.feature .sesja-desc{color:var(--ink-2)}
   .sesja.feature .sesja-meta{color:var(--clay)}
@@ -267,10 +268,10 @@
   .form{display:flex;flex-direction:column;gap:28px;text-align:left}
   .field{display:flex;flex-direction:column;gap:8px;position:relative}
   .field label{font-family:var(--mono);font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--clay)}
-  .field input,.field textarea{background:transparent;border:none;border-bottom:1px solid var(--line);padding:12px 0;font-family:var(--serif);font-size:22px;font-weight:300;color:var(--ink);outline:none;transition:border-color .3s}
+  .field input,.field textarea{background:transparent;border:none;border-bottom:1px solid var(--line);padding:12px 0;font-family:var(--serif);font-size:18px;font-weight:300;color:var(--ink);outline:none;transition:border-color .3s,box-shadow .3s;width:100%}
   .field input::placeholder,.field textarea::placeholder{color:rgba(31,24,20,0.3);font-style:italic}
-  .field input:focus,.field textarea:focus{border-color:var(--clay)}
-  .field textarea{resize:none;min-height:90px;line-height:1.4}
+  .field input:focus,.field textarea:focus{border-color:var(--clay);box-shadow:0 1px 0 0 var(--clay)}
+  .field textarea{resize:vertical;min-height:120px;line-height:1.5}
   .form .btn{align-self:flex-start;margin-top:16px}
   .form-status{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--terra);min-height:22px;opacity:0;transition:opacity .3s}
   .form-status.visible{opacity:1}
