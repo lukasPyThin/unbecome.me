@@ -336,7 +336,7 @@
 
 <!-- HERO -->
 <section class="hero" data-screen-label="01 Hero">
-  <div class="hero-meta">soma · oddech · obecność</div>
+  <div class="hero-meta">soma&nbsp;·&nbsp;oddech&nbsp;·&nbsp;obecność</div>
   <h1 class="hero-h">
     <span class="word">Przyjdź.</span><br>
     <span class="word"><em>Nie musisz</em></span><br>
@@ -672,9 +672,9 @@
     if(!pathRefs) return;
     const r = pathWrap.getBoundingClientRect();
     const vh = window.innerHeight;
-    const startTrigger = vh * 0.95;          // start drawing earlier (almost edge of viewport)
-    const endTrigger = vh * -0.20;            // finish later (after section scrolls past top)
-    const SCROLL_SCALE = 1.7;                 // higher = slower drawing
+    const startTrigger = vh * 0.92;          // start drawing when section enters from bottom
+    const endTrigger = vh * 0.10;             // finish drawing when section exits past top
+    const SCROLL_SCALE = 1.3;                 // higher = slower drawing
     const total = (r.height - (startTrigger - endTrigger)) * SCROLL_SCALE;
     const passed = startTrigger - r.top;
     let p = Math.max(0, Math.min(1, passed / Math.max(total, 1)));
