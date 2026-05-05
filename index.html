@@ -607,7 +607,6 @@
     updatePathProgress();
   }
   window.addEventListener('scroll',update,{passive:true});
-  update();
 
   // ── DROGA: winding SVG path through markers ──
   const pathWrap = document.getElementById('pathWrap');
@@ -702,6 +701,9 @@
     clearTimeout(pathResizeTimer);
     pathResizeTimer = setTimeout(initPath, 150);
   });
+
+  // first paint of stage tracker (must be AFTER pathRefs declaration to avoid TDZ)
+  update();
 
   // box breathing phase sync (4s × 4 = 16s, linear)
   const phases = ['wdech','zatrzymaj','wydech','zatrzymaj'];
