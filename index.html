@@ -276,6 +276,10 @@
   .form .btn{align-self:flex-start;margin-top:16px}
   .form-status{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--terra);min-height:22px;opacity:0;transition:opacity .3s}
   .form-status.visible{opacity:1}
+  .consent{display:flex;gap:12px;align-items:flex-start;padding:4px 0;font-family:var(--serif);font-size:14px;line-height:1.5;color:var(--soft);cursor:pointer}
+  .consent input[type=checkbox]{margin-top:5px;accent-color:var(--clay);flex-shrink:0;cursor:pointer;width:16px;height:16px}
+  .consent a{color:var(--clay);text-decoration:underline;text-underline-offset:2px}
+  .consent a:hover{color:var(--terra)}
 
   footer{padding:48px 36px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--soft);text-transform:lowercase}
 
@@ -567,6 +571,10 @@
         <label for="b-msg">Wiadomość</label>
         <textarea id="b-msg" name="message" placeholder="co Cię tu przyciągnęło?" required></textarea>
       </div>
+      <label class="consent">
+        <input type="checkbox" name="zgoda" id="b-zgoda" required>
+        <span>Wiadomość może dotyczyć tego, co czujesz w ciele - czasem zdrowia, samopoczucia. Te dane traktuję jako wrażliwe. Przetwarzam je wyłącznie po to, żeby Ci odpisać. Nie przekazuję dalej, usuwam po 30 dniach od ostatniej wymiany. Pełna <a href="/polityka-prywatnosci.html">polityka prywatności</a>. Wyrażam zgodę.</span>
+      </label>
       <div class="form-status" id="b-status"></div>
       <button type="submit" class="btn btn-primary">napisz <span class="arrow">→</span></button>
     </form>
@@ -578,7 +586,7 @@
 <footer>
   <div>Wrocław</div>
   <div>praca z ciałem i obecnością</div>
-  <div>© 2026 Łukasz</div>
+  <div>© 2026 Łukasz · <a href="/polityka-prywatnosci.html" style="color:inherit;text-decoration:underline;text-underline-offset:2px">polityka prywatności</a></div>
 </footer>
 
 <!-- left-side rail -->
