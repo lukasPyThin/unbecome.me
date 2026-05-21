@@ -8,7 +8,10 @@
 <meta name="keywords" content="warsztat Wrocław, praca z ciałem Wrocław, oddech Wrocław, somatyka Wrocław, Joga Poruszenie, 30 maja warsztat">
 <meta name="author" content="Łukasz Szpiczakowski">
 <meta name="robots" content="index, follow">
+<meta name="theme-color" content="#efe7d6">
+<meta name="color-scheme" content="light only">
 <link rel="canonical" href="https://unbecome.me/przezcialo">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%C5%81</text></svg>">
 
 <!-- Open Graph -->
 <meta property="og:title" content="Przez Ciało - 30 maja 2026 - Wrocław">
@@ -65,15 +68,64 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
-  /* Page-specific overrides */
+  /* ── BASE: synced z index.html :root + reset ── */
+  :root{
+    color-scheme: only light;
+    --bg:#efe7d6;
+    --bg-2:#e6dac4;
+    --paper:#f7f0df;
+    --clay:#b35b35;
+    --ochre:#c98a4a;
+    --terra:#9b4a2a;
+    --ink:#1f1814;
+    --ink-2:#3d2f24;
+    --soft:#5a4736;
+    --line:rgba(31,24,20,0.16);
+    --serif:"Cormorant Garamond",Georgia,serif;
+    --mono:"DM Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-weight:400;-webkit-font-smoothing:antialiased}
+  html{scroll-behavior:smooth}
+  body{overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--clay);color:var(--paper)}
+
+  /* ── a11y: prefers-reduced-motion (audit #2 HIGH-2) ── */
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important}
+  }
+
+  /* ── nav (synced z index.html) ── */
+  .nav{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:24px 36px 18px;z-index:60;background:linear-gradient(to bottom,var(--bg) 60%,transparent)}
+  .nav .mark{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:400;letter-spacing:-0.01em;display:inline-flex;align-items:baseline;gap:0}
+  .nav .mark .mark-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--clay);margin:0 3px 0 2px;transform:translateY(-1px);animation:pulse 4s ease-in-out infinite;transform-origin:center;align-self:baseline}
+  .nav .mark .mark-tld{font-family:var(--serif);font-style:italic;font-size:24px;letter-spacing:-0.01em;color:inherit;align-self:baseline}
+  @keyframes pulse{0%,100%{transform:translateY(-1px) scale(1);opacity:0.8}50%{transform:translateY(-1px) scale(1.5);opacity:1}}
+  .nav-links{display:flex;gap:24px;font-family:var(--mono);font-size:11px;text-transform:lowercase;letter-spacing:0.1em;color:var(--soft);align-items:center}
+  .nav-links a{padding:4px 0;border-bottom:1px solid transparent;transition:border-color .3s,color .3s}
+  .nav-links a:hover{color:var(--clay);border-color:var(--clay)}
+
+  /* ── btn (synced z index.html) ── */
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;font-family:var(--mono);font-size:12px;letter-spacing:0.12em;text-transform:lowercase;cursor:pointer;border:none;transition:all .3s ease;border-radius:0;text-decoration:none}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-primary:hover{background:var(--terra)}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+  .btn-ghost:hover{background:var(--ink);color:var(--paper)}
+  .btn .arrow{transition:transform .3s}
+  .btn:hover .arrow{transform:translateX(4px)}
+
+  main,nav,footer{position:relative;z-index:2}
+
+  /* ── PAGE-SPECIFIC: Przez Ciało event page ── */
   .event-hero {
     min-height: 80vh;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 80px 24px 60px;
+    text-align: center; padding: 120px 24px 60px;
     background: radial-gradient(ellipse at 50% 40%, var(--paper) 0%, var(--bg) 70%, var(--bg-2) 100%);
     position: relative;
   }
@@ -186,6 +238,11 @@
   .form-honeypot {
     position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;
   }
+  /* RODO consent — Hard Constraint #3 */
+  .consent{display:flex;gap:12px;align-items:flex-start;padding:8px 0 4px;font-family:var(--serif);font-size:14px;line-height:1.5;color:var(--soft);cursor:pointer;margin-bottom:8px}
+  .consent input[type=checkbox]{margin-top:5px;accent-color:var(--clay);flex-shrink:0;cursor:pointer;width:16px;height:16px}
+  .consent a{color:var(--clay);text-decoration:underline;text-underline-offset:2px}
+  .consent a:hover{color:var(--terra)}
   .form-submit {
     width: 100%; padding: 16px 24px; margin-top: 12px;
     background: var(--clay); color: var(--paper);
@@ -211,15 +268,30 @@
   }
 
   .event-footer {
-    padding: 40px 24px; text-align: center;
+    padding: 48px 24px; text-align: center;
     border-top: 1px solid var(--line);
   }
   .event-footer a {
     font-family: var(--mono); font-weight: 300; font-size: 13px;
     letter-spacing: 0.18em; text-transform: lowercase; color: var(--soft);
     text-decoration: none;
+    transition: color 0.3s;
   }
   .event-footer a:hover { color: var(--clay); }
+  .event-footer .sep { margin: 0 12px; color: var(--line); }
+
+  /* mobile */
+  @media (max-width: 640px){
+    .nav{padding:18px 20px 14px}
+    .nav-links{gap:14px;font-size:10px}
+    .event-hero{padding:100px 20px 48px}
+    .event-section{padding:60px 20px}
+    .event-bring{padding:48px 20px;margin:48px 0}
+    .event-form-section{padding:60px 20px 80px}
+    .event-form-section h2{font-size:32px}
+    .event-footer{flex-direction:column;gap:8px}
+    .event-footer .sep{display:none}
+  }
 </style>
 </head>
 <body>
@@ -315,6 +387,12 @@
       <input type="text" id="ev-gotcha" name="_gotcha" tabindex="-1" autocomplete="off">
     </div>
 
+    <!-- RODO consent — Hard Constraint #3 -->
+    <label class="consent">
+      <input type="checkbox" name="zgoda" id="ev-zgoda" required>
+      <span>Twoje zgłoszenie i ewentualne informacje o samopoczuciu/zdrowiu traktuję jako dane wrażliwe. Przetwarzam je wyłącznie po to, żeby Ci odpisać i wpisać Cię na listę. Listę kasuję 14 dni po wydarzeniu. Pełna <a href="/polityka-prywatnosci.html">polityka prywatności</a>. Wyrażam zgodę.</span>
+    </label>
+
     <button type="submit" class="form-submit">Wyślij zgłoszenie <span class="arrow">→</span></button>
     <div id="event-form-status" class="form-status" role="status"></div>
   </form>
@@ -323,8 +401,10 @@
 <!-- FOOTER -->
 <footer class="event-footer">
   <a href="/">unbecome.me</a>
-  <span style="margin:0 12px;color:var(--line)">·</span>
+  <span class="sep">·</span>
   <a href="/#napisz">kontakt ogólny</a>
+  <span class="sep">·</span>
+  <a href="/polityka-prywatnosci.html">polityka prywatności</a>
 </footer>
 
 <script>

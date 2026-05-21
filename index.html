@@ -49,19 +49,64 @@
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "unbecome.me - Łukasz Szpiczakowski",
-    "description": "Praca z ciałem, oddechem i obecnością. Wrocław. Sesje indywidualne, warsztaty grupowe Przez Ciało.",
+    "@id": "https://unbecome.me/#business",
+    "name": "unbecome.me",
+    "alternateName": "Łukasz Szpiczakowski — praca z ciałem",
+    "description": "Praca z ciałem, oddechem i obecnością. Sesje indywidualne oraz warsztaty grupowe Przez Ciało. Wrocław. Sesje po umówieniu — najpierw krótka rozmowa mailem lub telefonicznie.",
+    "url": "https://unbecome.me/",
+    "image": "https://unbecome.me/og-image.jpg",
+    "logo": "https://unbecome.me/og-image.jpg",
+    "founder": {
+      "@type": "Person",
+      "name": "Łukasz Szpiczakowski",
+      "jobTitle": "Praktyk somatyczny",
+      "url": "https://unbecome.me/"
+    },
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Wrocław",
+      "addressRegion": "Dolnośląskie",
       "addressCountry": "PL"
     },
     "areaServed": {
       "@type": "City",
       "name": "Wrocław"
     },
-    "url": "https://unbecome.me/",
-    "priceRange": "$$"
+    "priceRange": "250–400 zł",
+    "currenciesAccepted": "PLN",
+    "paymentAccepted": "BLIK, Przelew",
+    "knowsLanguage": "pl",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Sesje i warsztaty",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "name": "Sesja indywidualna",
+          "description": "75, 90 lub 120 minut — praca z ciałem, oddechem, obecnością.",
+          "priceSpecification": {
+            "@type": "PriceSpecification",
+            "minPrice": "250",
+            "maxPrice": "400",
+            "priceCurrency": "PLN"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Sesja oddechowa",
+          "description": "Sesja prowadzona przez oddech.",
+          "price": "250",
+          "priceCurrency": "PLN"
+        },
+        {
+          "@type": "Offer",
+          "name": "Przez Ciało — warsztat grupowy",
+          "description": "Spotkanie grupowe z pracą przez ruch, oddech i kontakt.",
+          "price": "120",
+          "priceCurrency": "PLN"
+        }
+      ]
+    }
   }
   </script>
 <style>
