@@ -144,9 +144,9 @@
   /* ── nav (minimal, top) ── */
   .nav{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:24px 36px 18px;z-index:60;background:linear-gradient(to bottom,var(--bg) 60%,transparent)}
   .nav .mark{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:400;letter-spacing:-0.01em;display:inline-flex;align-items:baseline;gap:0}
-  .nav .mark .mark-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--clay);margin:0 3px 0 2px;transform:translateY(-1px);animation:pulse 4s ease-in-out infinite;transform-origin:center;align-self:baseline}
+  .nav .mark .mark-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--clay);margin:0 3px 0 2px;transform:translateY(1px);animation:pulse 4s ease-in-out infinite;transform-origin:center;align-self:baseline}
   .nav .mark .mark-tld{font-family:var(--serif);font-style:italic;font-size:24px;letter-spacing:-0.01em;color:inherit;align-self:baseline}
-  @keyframes pulse{0%,100%{transform:translateY(-1px) scale(1);opacity:0.8}50%{transform:translateY(-1px) scale(1.5);opacity:1}}
+  @keyframes pulse{0%,100%{transform:translateY(1px) scale(1);opacity:0.8}50%{transform:translateY(1px) scale(1.5);opacity:1}}
   .nav-links{display:flex;gap:24px;font-family:var(--mono);font-size:11px;text-transform:lowercase;letter-spacing:0.1em;color:var(--soft);align-items:center}
   .nav-links a{padding:4px 0;border-bottom:1px solid transparent;transition:border-color .3s,color .3s}
   .nav-links a:hover{color:var(--clay);border-color:var(--clay)}
@@ -377,7 +377,7 @@
     <a href="#o-mnie">o mnie</a>
     <a href="#droga">droga</a>
     <a href="#sesje">sesje</a>
-    <a href="/medytacja">432&nbsp;hz</a>
+    <a href="/medytacja">przejście</a>
     <a href="#napisz">napisz</a>
   </div>
 </nav>
