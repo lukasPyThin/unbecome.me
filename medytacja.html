@@ -181,6 +181,15 @@
   /* respect reduced motion — keep it gentle */
   @media (prefers-reduced-motion: reduce){
     .orb,.halo{transition:opacity 2s ease}
+    .grain{mix-blend-mode:normal;opacity:0.12}
+  }
+
+  /* lżejsza kompozycja na mniejszych ekranach (starsze/słabsze telefony):
+     bez mix-blend (najdroższy koszt GPU na mobile), lżejszy cień, bez filtra na pierścieniu */
+  @media (max-width:600px){
+    .grain{mix-blend-mode:normal;opacity:0.1}
+    .orb{box-shadow:0 0 34px 6px rgba(200,116,63,0.28), inset 0 0 30px rgba(255,224,180,0.30)}
+    .ring .prog{filter:none}
   }
 </style>
 </head>
@@ -256,6 +265,7 @@
   // ────────────────────────────────────────────────────────────
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isSmall = window.matchMedia && window.matchMedia('(max-width:600px)').matches;  // proxy: słabszy/starszy telefon
 
   // ── partia prowadzenia (treść każdej fazy) ──
   // dur — sekundy · f — odcięcie filtra (Hz) · wet — przestrzeń (pogłos)
@@ -367,7 +377,7 @@
     toneFilter.frequency.value=PHASES[0].f; toneFilter.Q.value=0.4;
 
     dryGain=ctx.createGain(); dryGain.gain.value=0.86;
-    convolver=ctx.createConvolver(); convolver.buffer=buildReverbIR(3.8,2.2);
+    convolver=ctx.createConvolver(); convolver.buffer=buildReverbIR(isSmall?2.4:3.8, 2.2);  // krótszy IR na mobile = lżejsza konwolucja (mniej trzeszczenia)
     wetGain=ctx.createGain(); wetGain.gain.value=PHASES[0].wet;
 
     // magistrale głosów → filtr
@@ -459,18 +469,24 @@
   }
 
   // ── pętla animacji: oddech, sfera, postęp, fazy ──
-  var lastCue='';
+  var lastCue='', lastClock='', looping=false;
+
+  function startLoop(){
+    if(looping) return;                    // jedna pętla naraz (bez stackowania rAF)
+    looping=true;
+    lastTs=performance.now()/1000;
+    requestAnimationFrame(frame);
+  }
+
   function frame(ts){
-    requestAnimationFrame(frame);          // pojedyncza, wieczna pętla
+    if(!playing){ looping=false; return; } // pętla żyje TYLKO podczas grania — zero obciążenia na intro, w pauzie i po końcu (oszczędność CPU/baterii na starszych telefonach)
+    requestAnimationFrame(frame);
     var now=ts/1000;
-    if(!started){ lastTs=now; return; }
-    var dt= playing ? Math.min(0.05, now-lastTs) : 0;
+    var dt=Math.min(0.05, now-lastTs);
     lastTs=now;
 
-    if(playing){
-      elapsed+=dt;
-      if(elapsed>=TOTAL){ elapsed=TOTAL; complete(); }
-    }
+    elapsed+=dt;
+    if(elapsed>=TOTAL){ elapsed=TOTAL; complete(); }
 
     // która faza?
     var idx=PHASES.length-1;
@@ -485,7 +501,7 @@
     var inhaleDur=4.0;
     var exhaleDur=6.0 + 2.0*Math.min(1, elapsed/TOTAL);   // 6 -> 8
     var cycleDur=inhaleDur+exhaleDur;
-    if(playing){ breathT+=dt; if(breathT>=cycleDur) breathT-=cycleDur; }
+    breathT+=dt; if(breathT>=cycleDur) breathT-=cycleDur;
     var b, rising;
     if(breathT < inhaleDur){
       rising=true;
@@ -514,10 +530,11 @@
     var cueTxt = rising?'wdech':'wydech';
     if(cueTxt!==lastCue){ lastCue=cueTxt; if(elCue.classList.contains('show')) elCue.textContent=cueTxt; }
 
-    // postęp na pierścieniu + zegar
+    // postęp na pierścieniu + zegar (zegar przepisywany tylko gdy zmienia się sekunda)
     var prog=elapsed/TOTAL;
     elProg.style.strokeDashoffset=(C*(1-prog)).toFixed(2);
-    elClock.textContent=fmt(TOTAL-elapsed);
+    var ct=fmt(TOTAL-elapsed);
+    if(ct!==lastClock){ lastClock=ct; elClock.textContent=ct; }
   }
 
   // ── sterowanie ──
@@ -530,8 +547,8 @@
     elRing.classList.add('on');
     elTransport.classList.add('on');
     requestWake();
-    lastTs=performance.now()/1000;
     phaseIdx=-1;
+    startLoop();
   }
 
   function setPlaying(on){
@@ -542,7 +559,7 @@
       ? '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>'   // pauza
       : '<path d="M7 4l13 8L7 20z"></path>';                                                                             // play
     elCue.classList.toggle('show', on && phaseIdx>=0 && PHASES[phaseIdx].cue);
-    if(on){ lastTs=performance.now()/1000; requestWake(); } else releaseWake();
+    if(on){ requestWake(); startLoop(); } else releaseWake();
   }
 
   function complete(){
@@ -597,7 +614,7 @@
   });
 
   elClock.textContent=fmt(TOTAL);
-  requestAnimationFrame(frame);   // startuje wieczną pętlę (czeka aż 'started')
+  // pętla animacji startuje dopiero w begin() / przy wznowieniu (startLoop) — nie kręci się w tle na intro
 })();
 </script>
 </body>
