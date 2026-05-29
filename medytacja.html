@@ -404,20 +404,22 @@
     toneFilter.connect(reverbIn); wetGain.connect(master);
     master.connect(comp); comp.connect(ctx.destination);
 
-    // głosy: każdy z dwóch lekko rozstrojonych oscylatorów, panoramowanych L/R
+    // głosy: desktop = 2 rozstrojone oscylatory panoramowane L/R (szerokość/chór),
+    // mobile = 1 oscylator bez pannera (o połowę mniej węzłów audio = brak underrunu/trzeszczenia)
+    var oscPerVoice = isSmall ? 1 : 2;
     for(var i=0;i<VFREQ.length;i++){
       var vg=ctx.createGain(); vg.gain.value=PHASES[0].g[i];
       vg.connect(ONBREATH[i]?breathBus:steadyBus);
       var oscs=[];
       var detune=(i>=4)?9:6; // wyższe głosy odrobinę szersze
-      for(var k=0;k<2;k++){
+      for(var k=0;k<oscPerVoice;k++){
         var o=ctx.createOscillator();
         o.type=(i>=4)?'triangle':'sine';
         o.frequency.value=VFREQ[i];
-        o.detune.value=(k===0?-detune:detune);
-        var pan=ctx.createStereoPanner? ctx.createStereoPanner():null;
-        if(pan){pan.pan.value=(k===0?-0.5:0.5); o.connect(pan); pan.connect(vg);}
-        else { o.connect(vg); }
+        o.detune.value=(oscPerVoice===1)?0:(k===0?-detune:detune);
+        if(oscPerVoice===2 && ctx.createStereoPanner){
+          var pan=ctx.createStereoPanner(); pan.pan.value=(k===0?-0.5:0.5); o.connect(pan); pan.connect(vg);
+        } else { o.connect(vg); }
         o.start();
         oscs.push(o);
       }
@@ -528,7 +530,7 @@
     // modulacja głośności magistrali oddechu
     if(ctx){
       var lvl=(1-curBD)+curBD*b;
-      breathBus.gain.setValueAtTime(lvl, ctx.currentTime);
+      breathBus.gain.setTargetAtTime(lvl, ctx.currentTime, 0.04);  // płynny follow zamiast skoków co klatkę (eliminuje zipper noise / trzaski)
     }
 
     // sfera oddycha
