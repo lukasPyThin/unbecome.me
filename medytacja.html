@@ -186,7 +186,7 @@
 
   /* lżejsza kompozycja na mniejszych ekranach (starsze/słabsze telefony):
      bez mix-blend (najdroższy koszt GPU na mobile), lżejszy cień, bez filtra na pierścieniu */
-  @media (max-width:600px){
+  @media (pointer:coarse), (max-width:600px){
     .grain{mix-blend-mode:normal;opacity:0.1}
     .orb{box-shadow:0 0 34px 6px rgba(200,116,63,0.28), inset 0 0 30px rgba(255,224,180,0.30)}
     .ring .prog{filter:none}
@@ -265,7 +265,7 @@
   // ────────────────────────────────────────────────────────────
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var isSmall = window.matchMedia && window.matchMedia('(max-width:600px)').matches;  // proxy: słabszy/starszy telefon
+  var isSmall = window.matchMedia && (window.matchMedia('(pointer:coarse)').matches || window.matchMedia('(max-width:600px)').matches);  // dotyk LUB wąski ekran = telefon/tablet
 
   // ── partia prowadzenia (treść każdej fazy) ──
   // dur — sekundy · f — odcięcie filtra (Hz) · wet — przestrzeń (pogłos)
@@ -345,7 +345,7 @@
   var curBD=0.2, tgtBD=0.2; // głębia oddechu
 
   // ── węzły audio ──
-  var master, comp, toneFilter, dryGain, convolver, wetGain, breathBus, steadyBus;
+  var master, comp, toneFilter, dryGain, convolver, wetGain, breathBus, steadyBus, reverbIn;
   var voices=[]; // {name, freq, oscs:[], gain}
   var VFREQ=[108,216,324,432,648,864];
   var VNAME=['sub','low','fifth','fund','shimmer','high'];
@@ -377,8 +377,22 @@
     toneFilter.frequency.value=PHASES[0].f; toneFilter.Q.value=0.4;
 
     dryGain=ctx.createGain(); dryGain.gain.value=0.86;
-    convolver=ctx.createConvolver(); convolver.buffer=buildReverbIR(isSmall?2.4:3.8, 2.2);  // krótszy IR na mobile = lżejsza konwolucja (mniej trzeszczenia)
     wetGain=ctx.createGain(); wetGain.gain.value=PHASES[0].wet;
+
+    // pogłos: na słabszym sprzęcie (telefon/dotyk) TANI delay+feedback zamiast konwolucji.
+    // Convolver to główny powód trzeszczenia (underrun bufora audio) na starszych telefonach.
+    if(isSmall){
+      var rvDelay=ctx.createDelay(0.5); rvDelay.delayTime.value=0.09;
+      var rvLp=ctx.createBiquadFilter(); rvLp.type='lowpass'; rvLp.frequency.value=1800;
+      var rvFb=ctx.createGain(); rvFb.gain.value=0.45;            // <1 => stabilna petla, tlumiony ogon
+      rvDelay.connect(rvLp); rvLp.connect(rvFb); rvFb.connect(rvDelay);
+      rvDelay.connect(wetGain);
+      reverbIn=rvDelay;
+    } else {
+      convolver=ctx.createConvolver(); convolver.buffer=buildReverbIR(3.8, 2.2);
+      convolver.connect(wetGain);
+      reverbIn=convolver;
+    }
 
     // magistrale głosów → filtr
     breathBus=ctx.createGain(); breathBus.gain.value=1;
@@ -387,7 +401,7 @@
 
     // filtr → (dry + wet) → master → kompresor → wyjście
     toneFilter.connect(dryGain); dryGain.connect(master);
-    toneFilter.connect(convolver); convolver.connect(wetGain); wetGain.connect(master);
+    toneFilter.connect(reverbIn); wetGain.connect(master);
     master.connect(comp); comp.connect(ctx.destination);
 
     // głosy: każdy z dwóch lekko rozstrojonych oscylatorów, panoramowanych L/R
@@ -422,7 +436,7 @@
     g.gain.exponentialRampToValueAtTime(0.0001,t+7);
     var g2=ctx.createGain(); g2.gain.value=0.4;
     o.connect(g); o2.connect(g2); g2.connect(g);
-    g.connect(master); g.connect(convolver);
+    g.connect(master); g.connect(reverbIn);
     o.start(t); o2.start(t); o.stop(t+7.2); o2.stop(t+7.2);
   }
 
