@@ -433,10 +433,10 @@
     try{
       var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
       if(!OAC){ done(null); return; }
-      var sr=isSmall?22050:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // niższy SR na mobile = mniejszy bufor + szybszy render
+      var sr=(ctx&&ctx.sampleRate)||44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // renderuj w NATYWNYM sample rate odtwarzania => zero resamplingu (48000/22050=2.18 to brzydki resampling na Androidzie = glitch)
       var oc=new OAC(chs,len,sr);
       var m=oc.createGain(); m.gain.value=1.0;
-      var cp=oc.createDynamicsCompressor(); cp.threshold.value=-18;cp.knee.value=24;cp.ratio.value=3;cp.attack.value=0.01;cp.release.value=0.4;
+      var cp=oc.createDynamicsCompressor(); cp.threshold.value=-3;cp.knee.value=0;cp.ratio.value=20;cp.attack.value=0.002;cp.release.value=0.06;  // brickwall-limiter w renderze: nic nie przekroczy ~0 dB => zero przepaleń (popów) zapieczonych w buforze
       var tf=oc.createBiquadFilter(); tf.type='lowpass'; tf.Q.value=0.4; tf.frequency.setValueAtTime(PHASES[0].f,0);
       var dry=oc.createGain(); dry.gain.value=0.86;
       var wet=oc.createGain(); wet.gain.setValueAtTime(PHASES[0].wet,0);
