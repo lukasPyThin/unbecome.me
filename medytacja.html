@@ -255,7 +255,7 @@
   </div>
 </div>
 
-<audio id="player" playsinline preload="auto" style="display:none"></audio>
+<audio id="player" src="/medytacja-432.mp3" playsinline preload="auto" style="display:none"></audio>
 
 <script>
 (function(){
@@ -594,8 +594,7 @@
     // czas z zegara AUDIO (ctx.currentTime), nie z akumulacji klatek rAF:
     // rAF zamarza w tle (stąd stawał zegar), a zegar audio leci z dźwiękiem i pauzuje przy suspend.
     // Dzięki temu zegar/fazy/postęp zawsze pasują do dźwięku i synchronizują się po powrocie z tła.
-    if(rendered) elapsed = audioEl.currentTime;          // render: zegar z <audio>
-    else if(ctx) elapsed = ctx.currentTime;              // live/fallback: zegar z Web Audio
+    elapsed = audioEl.currentTime;   // zegar/fazy/postęp prosto z odtwarzanego pliku MP3
     if(elapsed>=TOTAL){ elapsed=TOTAL; complete(); }
 
     // która faza?
@@ -650,31 +649,22 @@
   // ── sterowanie ──
   function begin(){
     if(started) return;
-    if(useRender && !renderReady && !renderFailed) return;   // jeszcze "przygotowuję…" — audio nie gotowe, nie startuj (przycisk i tak gated)
-    started=true; playing=true; finished=false; rendered=false;
+    started=true; playing=true; finished=false;
     elIntro.classList.add('hidden');
     elRing.classList.add('on');
     elTransport.classList.add('on');
-    if(useRender){
-      if(renderReady){
-        // audio GOTOWE => graj W GEŚCIE klika (autoplay OK, bo play() jest synchronicznie w handlerze)
-        rendered=true; audioEl.src=audioBlobURL; audioEl.volume=parseInt(elVol.value,10)/100; audioEl.play().catch(function(){});
-      } else {
-        buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume();   // renderFailed => synteza live
-      }
-      requestWake(); phaseIdx=-1; startLoop();
-    } else {
-      buildAudio();
-      if(ctx.state==='suspended') ctx.resume();
-      requestWake(); phaseIdx=-1; startLoop();
-    }
+    try{ audioEl.currentTime=0; }catch(e){}
+    audioEl.volume=parseInt(elVol.value,10)/100;
+    audioEl.play().catch(function(){});   // hostowany plik MP3, play() W GEŚCIE klika => gra wszędzie (zero renderu/autoplay-problemów)
+    requestWake();
+    phaseIdx=-1;
+    startLoop();
   }
 
   function setPlaying(on){
     if(!started||finished) return;
     playing=on;
-    if(rendered){ if(on) audioEl.play().catch(function(){}); else audioEl.pause(); }
-    else if(ctx){ if(on) ctx.resume(); else ctx.suspend(); }
+    if(on) audioEl.play().catch(function(){}); else audioEl.pause();
     elPPIcon.innerHTML = on
       ? '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>'   // pauza
       : '<path d="M7 4l13 8L7 20z"></path>';                                                                             // play
@@ -688,14 +678,8 @@
     elCue.classList.remove('show');
     elGuide.classList.remove('show');
     elOver.classList.remove('show');
-    // wybrzmienie i wyciszenie (render: fade zbakowany w buforze; live: ramp na master)
-    if(ctx && !rendered && master){
-      var t=ctx.currentTime;
-      master.gain.cancelScheduledValues(t);
-      master.gain.setValueAtTime(master.gain.value,t);
-      master.gain.linearRampToValueAtTime(0.0001,t+6);
-    }
-    if(rendered){ try{ audioEl.pause(); }catch(e){} }
+    // fade jest zbakowany w pliku; tu tylko zatrzymaj odtwarzacz
+    try{ audioEl.pause(); }catch(e){}
     releaseWake();
     setTimeout(function(){
       elTransport.classList.remove('on');
@@ -727,9 +711,7 @@
   elAgain.addEventListener('click', restart);
   elPP.addEventListener('click', function(){ setPlaying(!playing); });
   elVol.addEventListener('input', function(){
-    var v=parseInt(elVol.value,10)/100;
-    if(rendered){ audioEl.volume=v; }
-    else if(master && ctx){ master.gain.setTargetAtTime(v*0.9, ctx.currentTime, 0.05); }
+    audioEl.volume=parseInt(elVol.value,10)/100;
   });
   // spacja = pauza/wznów
   document.addEventListener('keydown', function(e){
@@ -737,7 +719,6 @@
   });
 
   elClock.textContent=fmt(TOTAL);
-  if(useRender){ elEnter.innerHTML='przygotowuję dźwięk…'; setTimeout(prerender, 150); }   // prerender na load; przycisk gated do gotowości => play() zawsze w geście
   // pętla animacji startuje dopiero w begin() / przy wznowieniu (startLoop) — nie kręci się w tle na intro
 })();
 </script>
