@@ -255,6 +255,8 @@
   </div>
 </div>
 
+<audio id="player" playsinline preload="auto" style="display:none"></audio>
+
 <script>
 (function(){
   "use strict";
@@ -331,6 +333,7 @@
       elOver=$('overline'), elGuide=$('guide'), elCue=$('cue'),
       elIntro=$('intro'), elOutro=$('outro'), elEnter=$('enter'), elAgain=$('again'),
       elTransport=$('transport'), elPP=$('pp'), elPPIcon=$('ppIcon'), elVol=$('vol'), elClock=$('clock');
+  var audioEl=$('player');  // natywne odtwarzanie HTML5 <audio> (omija glitche Web Audio na mobile)
 
   // ring geometry
   var R=96, C=2*Math.PI*R;
@@ -488,13 +491,23 @@
     } catch(err){ done(null); }
   }
 
+  function bufferToWav(buf){
+    var ch=buf.numberOfChannels, len=buf.length, sr=buf.sampleRate, ba=ch*2, dl=len*ba;
+    var ab=new ArrayBuffer(44+dl), dv=new DataView(ab), p=0;
+    function s(t){ for(var i=0;i<t.length;i++) dv.setUint8(p++,t.charCodeAt(i)); }
+    function u32(v){ dv.setUint32(p,v,true); p+=4; } function u16(v){ dv.setUint16(p,v,true); p+=2; }
+    s('RIFF'); u32(36+dl); s('WAVE'); s('fmt '); u32(16); u16(1); u16(ch); u32(sr); u32(sr*ba); u16(ba); u16(16); s('data'); u32(dl);
+    var chs=[]; for(var c=0;c<ch;c++) chs.push(buf.getChannelData(c));
+    for(var i=0;i<len;i++){ for(var c=0;c<ch;c++){ var x=Math.max(-1,Math.min(1,chs[c][i])); dv.setInt16(p, x<0?x*0x8000:x*0x7FFF, true); p+=2; } }
+    return ab;
+  }
+
   function playRendered(buf){
-    if(!ctx){ var AC=window.AudioContext||window.webkitAudioContext; ctx=new AC(); }  // reużyj kontekstu odblokowanego w geście (begin)
-    renderSrc=ctx.createBufferSource(); renderSrc.buffer=buf;
-    master=ctx.createGain(); master.gain.value=parseInt(elVol.value,10)/100*0.9;
-    renderSrc.connect(master); master.connect(ctx.destination);
-    if(ctx.state==='suspended') ctx.resume();
-    renderSrc.start(0);
+    // graj gotowy bufor przez NATYWNY <audio> (WAV blob), nie przez Web Audio — to omija glitche/trzaski Web Audio na mobile
+    var blob=new Blob([bufferToWav(buf)], {type:'audio/wav'});
+    audioEl.src=URL.createObjectURL(blob);
+    audioEl.volume=parseInt(elVol.value,10)/100;
+    audioEl.play().catch(function(){});   // element odblokowany cichym WAV-em w geście (begin)
   }
 
   function showSettling(on){ if(on){ elOver.textContent='osiadanie…'; elOver.classList.add('show'); } }
@@ -577,7 +590,8 @@
     // czas z zegara AUDIO (ctx.currentTime), nie z akumulacji klatek rAF:
     // rAF zamarza w tle (stąd stawał zegar), a zegar audio leci z dźwiękiem i pauzuje przy suspend.
     // Dzięki temu zegar/fazy/postęp zawsze pasują do dźwięku i synchronizują się po powrocie z tła.
-    if(ctx) elapsed = ctx.currentTime;
+    if(rendered) elapsed = audioEl.currentTime;          // render: zegar z <audio>
+    else if(ctx) elapsed = ctx.currentTime;              // live/fallback: zegar z Web Audio
     if(elapsed>=TOTAL){ elapsed=TOTAL; complete(); }
 
     // która faza?
@@ -637,16 +651,18 @@
     elRing.classList.add('on');
     elTransport.classList.add('on');
     if(useRender){
-      // ODBLOKUJ kontekst W GEŚCIE (klik) zanim ruszy async render — inaczej bufor gra do zawieszonego
-      // kontekstu (cisza dopóki user nie da pauza/play; autoplay policy blokuje resume poza gestem).
+      // ctx potrzebny do referencji sample-rate / IR renderu i do fallbacku live. Tworzymy w geście.
       var AC=window.AudioContext||window.webkitAudioContext;
       ctx=new AC();
-      try{ var ub=ctx.createBufferSource(); ub.buffer=ctx.createBuffer(1,1,ctx.sampleRate); ub.connect(ctx.destination); ub.start(0); }catch(e){}
       if(ctx.state==='suspended') ctx.resume();
+      // ODBLOKUJ <audio> W GEŚCIE: zagraj cichy WAV, żeby async play() po renderze przeszło na mobile (autoplay policy)
+      try{ var sb=ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.05), ctx.sampleRate);
+           audioEl.src=URL.createObjectURL(new Blob([bufferToWav(sb)],{type:'audio/wav'}));
+           var pp=audioEl.play(); if(pp&&pp.then) pp.then(function(){audioEl.pause();audioEl.currentTime=0;}).catch(function(){}); }catch(e){}
       showSettling(true);                         // "osiadanie…" w czasie renderu
       renderOffline(function(buf){
         if(buf){ rendered=true; playRendered(buf); }
-        else { buildAudio(); if(ctx.state==='suspended') ctx.resume(); }  // fallback: synteza live
+        else { buildAudio(); if(ctx.state==='suspended') ctx.resume(); }  // fallback: synteza live na ctx
         requestWake(); phaseIdx=-1; startLoop();
       });
     } else {
@@ -659,7 +675,8 @@
   function setPlaying(on){
     if(!started||finished) return;
     playing=on;
-    if(ctx){ if(on) ctx.resume(); else ctx.suspend(); }
+    if(rendered){ if(on) audioEl.play().catch(function(){}); else audioEl.pause(); }
+    else if(ctx){ if(on) ctx.resume(); else ctx.suspend(); }
     elPPIcon.innerHTML = on
       ? '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>'   // pauza
       : '<path d="M7 4l13 8L7 20z"></path>';                                                                             // play
@@ -673,13 +690,14 @@
     elCue.classList.remove('show');
     elGuide.classList.remove('show');
     elOver.classList.remove('show');
-    // wybrzmienie i wyciszenie
-    if(ctx){
+    // wybrzmienie i wyciszenie (render: fade zbakowany w buforze; live: ramp na master)
+    if(ctx && !rendered && master){
       var t=ctx.currentTime;
       master.gain.cancelScheduledValues(t);
       master.gain.setValueAtTime(master.gain.value,t);
       master.gain.linearRampToValueAtTime(0.0001,t+6);
     }
+    if(rendered){ try{ audioEl.pause(); }catch(e){} }
     releaseWake();
     setTimeout(function(){
       elTransport.classList.remove('on');
@@ -711,7 +729,9 @@
   elAgain.addEventListener('click', restart);
   elPP.addEventListener('click', function(){ setPlaying(!playing); });
   elVol.addEventListener('input', function(){
-    if(master) master.gain.setTargetAtTime(parseInt(elVol.value,10)/100*0.9, ctx.currentTime, 0.05);
+    var v=parseInt(elVol.value,10)/100;
+    if(rendered){ audioEl.volume=v; }
+    else if(master && ctx){ master.gain.setTargetAtTime(v*0.9, ctx.currentTime, 0.05); }
   });
   // spacja = pauza/wznów
   document.addEventListener('keydown', function(e){
