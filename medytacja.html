@@ -437,25 +437,19 @@
     try{
       var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
       if(!OAC){ done(null); return; }
-      var sr=isSmall?24000:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // <audio> resampluje natywnie => render w niższym SR = mniejszy plik WAV, szybszy prerender
+      var sr=24000, chs=1, len=Math.ceil(TOTAL*sr);  // mono 24k = szybki render + mały WAV (<audio> resampluje natywnie). Jakość poprawimy gdy ścieżka pewna.
       var oc=new OAC(chs,len,sr);
       var m=oc.createGain(); m.gain.value=1.0;
       var cp=oc.createDynamicsCompressor(); cp.threshold.value=-3;cp.knee.value=0;cp.ratio.value=20;cp.attack.value=0.002;cp.release.value=0.06;  // brickwall-limiter w renderze: nic nie przekroczy ~0 dB => zero przepaleń (popów) zapieczonych w buforze
       var tf=oc.createBiquadFilter(); tf.type='lowpass'; tf.Q.value=0.4; tf.frequency.setValueAtTime(PHASES[0].f,0);
       var dry=oc.createGain(); dry.gain.value=0.86;
       var wet=oc.createGain(); wet.gain.setValueAtTime(PHASES[0].wet,0);
-      var rin;
-      if(isSmall){   // mobile: tani delay-pogłos = szybki render (konwolucja 810s bywa za wolna na telefonie => timeout => fallback => trzask)
-        var rd=oc.createDelay(0.5); rd.delayTime.value=0.09;
-        var rlp=oc.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=1800;
-        var rfb=oc.createGain(); rfb.gain.value=0.45;
-        rd.connect(rlp); rlp.connect(rfb); rfb.connect(rd); rd.connect(wet); rin=rd;
-      } else {
-        var conv=oc.createConvolver();
-        var irLen=Math.floor(sr*3.4), ir=oc.createBuffer(chs,irLen,sr);
-        for(var c=0;c<chs;c++){ var dd=ir.getChannelData(c); for(var s=0;s<irLen;s++){ var x=s/irLen; dd[s]=(Math.random()*2-1)*Math.pow(1-x,2.2); } }
-        conv.buffer=ir; conv.connect(wet); rin=conv;
-      }
+      // tani delay-pogłos (nie konwolucja) => render szybki na każdym urządzeniu => krótkie "przygotowuję"
+      var rd=oc.createDelay(0.5); rd.delayTime.value=0.09;
+      var rlp=oc.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=1800;
+      var rfb=oc.createGain(); rfb.gain.value=0.45;
+      rd.connect(rlp); rlp.connect(rfb); rfb.connect(rd); rd.connect(wet);
+      var rin=rd;
       var bus=oc.createGain(); bus.connect(tf);
       tf.connect(dry); dry.connect(m); tf.connect(rin); wet.connect(m); m.connect(cp); cp.connect(oc.destination);
       var vgs=[];
@@ -518,6 +512,7 @@
     renderOffline(function(buf){
       if(buf){ try{ audioBlobURL=URL.createObjectURL(new Blob([bufferToWav(buf)],{type:'audio/wav'})); renderReady=true; }catch(e){ renderFailed=true; } }
       else { renderFailed=true; }
+      elEnter.innerHTML='wejdź <span class="a">→</span>';   // audio gotowe (lub fallback) => odblokuj przycisk
     });
   }
 
@@ -655,26 +650,17 @@
   // ── sterowanie ──
   function begin(){
     if(started) return;
+    if(useRender && !renderReady && !renderFailed) return;   // jeszcze "przygotowuję…" — audio nie gotowe, nie startuj (przycisk i tak gated)
     started=true; playing=true; finished=false; rendered=false;
     elIntro.classList.add('hidden');
     elRing.classList.add('on');
     elTransport.classList.add('on');
     if(useRender){
-      if(renderFailed){
-        buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume();   // render padł => synteza live
-      } else if(renderReady){
-        // audio GOTOWE => graj W GEŚCIE klika (autoplay OK, bo play() jest w handlerze kliknięcia)
+      if(renderReady){
+        // audio GOTOWE => graj W GEŚCIE klika (autoplay OK, bo play() jest synchronicznie w handlerze)
         rendered=true; audioEl.src=audioBlobURL; audioEl.volume=parseInt(elVol.value,10)/100; audioEl.play().catch(function(){});
       } else {
-        // prerender jeszcze trwa: aktywuj <audio> W GEŚCIE cichym WAV-em, graj gdy gotowe
-        showSettling(true);
-        try{ var AC=window.AudioContext||window.webkitAudioContext; if(!ctx) ctx=new AC();
-             var sb=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.05),ctx.sampleRate);
-             audioEl.src=URL.createObjectURL(new Blob([bufferToWav(sb)],{type:'audio/wav'})); audioEl.play().catch(function(){}); }catch(e){}
-        var w=setInterval(function(){
-          if(renderReady){ clearInterval(w); rendered=true; audioEl.src=audioBlobURL; audioEl.volume=parseInt(elVol.value,10)/100; audioEl.play().catch(function(){}); }
-          else if(renderFailed){ clearInterval(w); buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume(); }
-        }, 200);
+        buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume();   // renderFailed => synteza live
       }
       requestWake(); phaseIdx=-1; startLoop();
     } else {
@@ -751,7 +737,7 @@
   });
 
   elClock.textContent=fmt(TOTAL);
-  if(useRender){ setTimeout(prerender, 150); }   // start prerender na load (po pierwszym paincie intro)
+  if(useRender){ elEnter.innerHTML='przygotowuję dźwięk…'; setTimeout(prerender, 150); }   // prerender na load; przycisk gated do gotowości => play() zawsze w geście
   // pętla animacji startuje dopiero w begin() / przy wznowieniu (startLoop) — nie kręci się w tle na intro
 })();
 </script>
