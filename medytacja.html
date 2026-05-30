@@ -367,8 +367,7 @@
   }
 
   function buildAudio(){
-    var AC=window.AudioContext||window.webkitAudioContext;
-    ctx=new AC();
+    if(!ctx){ var AC=window.AudioContext||window.webkitAudioContext; ctx=new AC(); }  // reużyj kontekstu odblokowanego w geście (render-fallback), inaczej stwórz
 
     master=ctx.createGain();   master.gain.value=parseInt(elVol.value,10)/100*0.9;
     comp=ctx.createDynamicsCompressor();
@@ -434,19 +433,27 @@
     try{
       var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
       if(!OAC){ done(null); return; }
-      var sr=isSmall?32000:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);
+      var sr=isSmall?22050:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // niższy SR na mobile = mniejszy bufor + szybszy render
       var oc=new OAC(chs,len,sr);
       var m=oc.createGain(); m.gain.value=1.0;
       var cp=oc.createDynamicsCompressor(); cp.threshold.value=-18;cp.knee.value=24;cp.ratio.value=3;cp.attack.value=0.01;cp.release.value=0.4;
       var tf=oc.createBiquadFilter(); tf.type='lowpass'; tf.Q.value=0.4; tf.frequency.setValueAtTime(PHASES[0].f,0);
       var dry=oc.createGain(); dry.gain.value=0.86;
       var wet=oc.createGain(); wet.gain.setValueAtTime(PHASES[0].wet,0);
-      var conv=oc.createConvolver();
-      var irLen=Math.floor(sr*3.4), ir=oc.createBuffer(chs,irLen,sr);
-      for(var c=0;c<chs;c++){ var dd=ir.getChannelData(c); for(var s=0;s<irLen;s++){ var x=s/irLen; dd[s]=(Math.random()*2-1)*Math.pow(1-x,2.2); } }
-      conv.buffer=ir; conv.connect(wet);
+      var rin;
+      if(isSmall){   // mobile: tani delay-pogłos = szybki render (konwolucja 810s bywa za wolna na telefonie => timeout => fallback => trzask)
+        var rd=oc.createDelay(0.5); rd.delayTime.value=0.09;
+        var rlp=oc.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=1800;
+        var rfb=oc.createGain(); rfb.gain.value=0.45;
+        rd.connect(rlp); rlp.connect(rfb); rfb.connect(rd); rd.connect(wet); rin=rd;
+      } else {
+        var conv=oc.createConvolver();
+        var irLen=Math.floor(sr*3.4), ir=oc.createBuffer(chs,irLen,sr);
+        for(var c=0;c<chs;c++){ var dd=ir.getChannelData(c); for(var s=0;s<irLen;s++){ var x=s/irLen; dd[s]=(Math.random()*2-1)*Math.pow(1-x,2.2); } }
+        conv.buffer=ir; conv.connect(wet); rin=conv;
+      }
       var bus=oc.createGain(); bus.connect(tf);
-      tf.connect(dry); dry.connect(m); tf.connect(conv); wet.connect(m); m.connect(cp); cp.connect(oc.destination);
+      tf.connect(dry); dry.connect(m); tf.connect(rin); wet.connect(m); m.connect(cp); cp.connect(oc.destination);
       var vgs=[];
       for(var i=0;i<VFREQ.length;i++){
         var vg=oc.createGain(); vg.gain.setValueAtTime(PHASES[0].g[i],0); vg.connect(bus); vgs.push(vg);
@@ -466,7 +473,7 @@
           var bo=oc.createOscillator(); bo.type='sine'; bo.frequency.value=p.bell;
           var bo2=oc.createOscillator(); bo2.type='sine'; bo2.frequency.value=p.bell*2.005;
           var bg=oc.createGain(); bg.gain.setValueAtTime(0.0001,t0); bg.gain.exponentialRampToValueAtTime(0.16,t0+0.04); bg.gain.exponentialRampToValueAtTime(0.0001,t0+7);
-          var bg2=oc.createGain(); bg2.gain.value=0.4; bo.connect(bg); bo2.connect(bg2); bg2.connect(bg); bg.connect(m); bg.connect(conv);
+          var bg2=oc.createGain(); bg2.gain.value=0.4; bo.connect(bg); bo2.connect(bg2); bg2.connect(bg); bg.connect(m); bg.connect(rin);
           bo.start(t0); bo2.start(t0); bo.stop(t0+7.2); bo2.stop(t0+7.2);
         }
       }
@@ -482,8 +489,7 @@
   }
 
   function playRendered(buf){
-    var AC=window.AudioContext||window.webkitAudioContext;
-    ctx=new AC();
+    if(!ctx){ var AC=window.AudioContext||window.webkitAudioContext; ctx=new AC(); }  // reużyj kontekstu odblokowanego w geście (begin)
     renderSrc=ctx.createBufferSource(); renderSrc.buffer=buf;
     master=ctx.createGain(); master.gain.value=parseInt(elVol.value,10)/100*0.9;
     renderSrc.connect(master); master.connect(ctx.destination);
@@ -631,6 +637,12 @@
     elRing.classList.add('on');
     elTransport.classList.add('on');
     if(useRender){
+      // ODBLOKUJ kontekst W GEŚCIE (klik) zanim ruszy async render — inaczej bufor gra do zawieszonego
+      // kontekstu (cisza dopóki user nie da pauza/play; autoplay policy blokuje resume poza gestem).
+      var AC=window.AudioContext||window.webkitAudioContext;
+      ctx=new AC();
+      try{ var ub=ctx.createBufferSource(); ub.buffer=ctx.createBuffer(1,1,ctx.sampleRate); ub.connect(ctx.destination); ub.start(0); }catch(e){}
+      if(ctx.state==='suspended') ctx.resume();
       showSettling(true);                         // "osiadanie…" w czasie renderu
       renderOffline(function(buf){
         if(buf){ rendered=true; playRendered(buf); }
