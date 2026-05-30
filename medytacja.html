@@ -266,6 +266,7 @@
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isSmall = window.matchMedia && (window.matchMedia('(pointer:coarse)').matches || window.matchMedia('(max-width:600px)').matches);  // dotyk LUB wąski ekran = telefon/tablet
+  var useRender = /[?&]render/.test(location.search);  // TEST: /medytacja?render=1 = render offline zamiast syntezy live
 
   // ── partia prowadzenia (treść każdej fazy) ──
   // dur — sekundy · f — odcięcie filtra (Hz) · wet — przestrzeń (pogłos)
@@ -336,7 +337,7 @@
   elProg.style.strokeDasharray=C; elProg.style.strokeDashoffset=C;
 
   // ── stan ──
-  var ctx=null, started=false, playing=false, finished=false;
+  var ctx=null, started=false, playing=false, finished=false, rendered=false, renderSrc=null;
   var elapsed=0;            // sekundy przebyte (rośnie tylko gdy gra)
   var lastTs=0;             // znacznik ostatniej klatki
   var phaseIdx=-1;
@@ -427,6 +428,71 @@
     }
   }
 
+  // ── RENDER OFFLINE (test za ?render=1): pełna jakość zrenderowana z góry NA urządzeniu,
+  //    potem odtwarzany gotowy bufor = zero syntezy w czasie rzeczywistym = zero trzasków, gra też w tle ──
+  function renderOffline(done){
+    try{
+      var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+      if(!OAC){ done(null); return; }
+      var sr=isSmall?32000:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);
+      var oc=new OAC(chs,len,sr);
+      var m=oc.createGain(); m.gain.value=1.0;
+      var cp=oc.createDynamicsCompressor(); cp.threshold.value=-18;cp.knee.value=24;cp.ratio.value=3;cp.attack.value=0.01;cp.release.value=0.4;
+      var tf=oc.createBiquadFilter(); tf.type='lowpass'; tf.Q.value=0.4; tf.frequency.setValueAtTime(PHASES[0].f,0);
+      var dry=oc.createGain(); dry.gain.value=0.86;
+      var wet=oc.createGain(); wet.gain.setValueAtTime(PHASES[0].wet,0);
+      var conv=oc.createConvolver();
+      var irLen=Math.floor(sr*3.4), ir=oc.createBuffer(chs,irLen,sr);
+      for(var c=0;c<chs;c++){ var dd=ir.getChannelData(c); for(var s=0;s<irLen;s++){ var x=s/irLen; dd[s]=(Math.random()*2-1)*Math.pow(1-x,2.2); } }
+      conv.buffer=ir; conv.connect(wet);
+      var bus=oc.createGain(); bus.connect(tf);
+      tf.connect(dry); dry.connect(m); tf.connect(conv); wet.connect(m); m.connect(cp); cp.connect(oc.destination);
+      var vgs=[];
+      for(var i=0;i<VFREQ.length;i++){
+        var vg=oc.createGain(); vg.gain.setValueAtTime(PHASES[0].g[i],0); vg.connect(bus); vgs.push(vg);
+        var det=(i>=4)?9:6;
+        for(var k=0;k<2;k++){
+          var o=oc.createOscillator(); o.type=(i>=4)?'triangle':'sine'; o.frequency.value=VFREQ[i]; o.detune.value=(k===0?-det:det);
+          if(oc.createStereoPanner){ var pn=oc.createStereoPanner(); pn.pan.value=(k===0?-0.5:0.5); o.connect(pn); pn.connect(vg); } else { o.connect(vg); }
+          o.start(0);
+        }
+      }
+      for(var j=0;j<PHASES.length;j++){
+        var t0=BOUNDS[j], e=t0+TRANS, p=PHASES[j];
+        tf.frequency.linearRampToValueAtTime(p.f,e);
+        wet.gain.linearRampToValueAtTime(p.wet,e);
+        for(var v=0;v<vgs.length;v++) vgs[v].gain.linearRampToValueAtTime(p.g[v],e);
+        if(p.bell){
+          var bo=oc.createOscillator(); bo.type='sine'; bo.frequency.value=p.bell;
+          var bo2=oc.createOscillator(); bo2.type='sine'; bo2.frequency.value=p.bell*2.005;
+          var bg=oc.createGain(); bg.gain.setValueAtTime(0.0001,t0); bg.gain.exponentialRampToValueAtTime(0.16,t0+0.04); bg.gain.exponentialRampToValueAtTime(0.0001,t0+7);
+          var bg2=oc.createGain(); bg2.gain.value=0.4; bo.connect(bg); bo2.connect(bg2); bg2.connect(bg); bg.connect(m); bg.connect(conv);
+          bo.start(t0); bo2.start(t0); bo.stop(t0+7.2); bo2.stop(t0+7.2);
+        }
+      }
+      m.gain.setValueAtTime(1.0, Math.max(0,TOTAL-6));
+      m.gain.linearRampToValueAtTime(0.0001, TOTAL);
+      var fired=false, to;
+      function fin(b){ if(fired) return; fired=true; if(to) clearTimeout(to); done(b); }
+      to=setTimeout(function(){ fin(null); }, 25000);   // bezpiecznik: render za wolny => fallback na live
+      oc.oncomplete=function(ev){ fin(ev.renderedBuffer); };
+      var pr=oc.startRendering();
+      if(pr && pr.then){ pr.then(fin).catch(function(){ fin(null); }); }
+    } catch(err){ done(null); }
+  }
+
+  function playRendered(buf){
+    var AC=window.AudioContext||window.webkitAudioContext;
+    ctx=new AC();
+    renderSrc=ctx.createBufferSource(); renderSrc.buffer=buf;
+    master=ctx.createGain(); master.gain.value=parseInt(elVol.value,10)/100*0.9;
+    renderSrc.connect(master); master.connect(ctx.destination);
+    if(ctx.state==='suspended') ctx.resume();
+    renderSrc.start(0);
+  }
+
+  function showSettling(on){ if(on){ elOver.textContent='osiadanie…'; elOver.classList.add('show'); } }
+
   // miękki dzwon — znacznik przejścia między fazami
   function bell(freq){
     if(!ctx||!freq) return;
@@ -444,23 +510,24 @@
 
   // ── zastosuj fazę: łagodne rampy parametrów audio + tekst ──
   function applyPhase(i){
-    var p=PHASES[i]; if(!ctx) return;
-    var t=ctx.currentTime, end=t+TRANS;
-    toneFilter.frequency.cancelScheduledValues(t);
-    toneFilter.frequency.setValueAtTime(toneFilter.frequency.value,t);
-    toneFilter.frequency.linearRampToValueAtTime(p.f,end);
-    wetGain.gain.cancelScheduledValues(t);
-    wetGain.gain.setValueAtTime(wetGain.gain.value,t);
-    wetGain.gain.linearRampToValueAtTime(p.wet,end);
-    for(var v=0;v<voices.length;v++){
-      var gp=voices[v].gain.gain;
-      gp.cancelScheduledValues(t); gp.setValueAtTime(gp.value,t);
-      gp.linearRampToValueAtTime(p.g[v],end);
+    var p=PHASES[i];
+    if(ctx && !rendered){   // rampy audio tylko dla syntezy live; w trybie render audio jest zbakowane offline
+      var t=ctx.currentTime, end=t+TRANS;
+      toneFilter.frequency.cancelScheduledValues(t);
+      toneFilter.frequency.setValueAtTime(toneFilter.frequency.value,t);
+      toneFilter.frequency.linearRampToValueAtTime(p.f,end);
+      wetGain.gain.cancelScheduledValues(t);
+      wetGain.gain.setValueAtTime(wetGain.gain.value,t);
+      wetGain.gain.linearRampToValueAtTime(p.wet,end);
+      for(var v=0;v<voices.length;v++){
+        var gp=voices[v].gain.gain;
+        gp.cancelScheduledValues(t); gp.setValueAtTime(gp.value,t);
+        gp.linearRampToValueAtTime(p.g[v],end);
+      }
+      tgtBP=p.bp; tgtBD=p.bd;
+      if(p.bell) bell(p.bell);
     }
-    tgtBP=p.bp; tgtBD=p.bd;
-    if(p.bell) bell(p.bell);
-
-    // tekst — krzyżowe wygaszenie
+    // tekst — krzyżowe wygaszenie (oba tryby)
     setOverline(p.over);
     setGuide(p.lines);
     elCue.classList.toggle('show', !!p.cue && playing);
@@ -530,8 +597,8 @@
       b=(1+Math.cos(((breathT-inhaleDur)/exhaleDur)*Math.PI))/2; // 1 -> 0 gladko (wydech, dluzszy)
     }
 
-    // modulacja głośności magistrali oddechu
-    if(ctx){
+    // modulacja głośności magistrali oddechu (tylko synteza live; render bakuje to offline)
+    if(ctx && !rendered && breathBus){
       var lvl=(1-curBD)+curBD*b;
       breathBus.gain.setTargetAtTime(lvl, ctx.currentTime, 0.04);  // płynny follow zamiast skoków co klatkę (eliminuje zipper noise / trzaski)
     }
@@ -559,15 +626,22 @@
   // ── sterowanie ──
   function begin(){
     if(started) return;
-    started=true; playing=true; finished=false;
-    buildAudio();
-    if(ctx.state==='suspended') ctx.resume();
+    started=true; playing=true; finished=false; rendered=false;
     elIntro.classList.add('hidden');
     elRing.classList.add('on');
     elTransport.classList.add('on');
-    requestWake();
-    phaseIdx=-1;
-    startLoop();
+    if(useRender){
+      showSettling(true);                         // "osiadanie…" w czasie renderu
+      renderOffline(function(buf){
+        if(buf){ rendered=true; playRendered(buf); }
+        else { buildAudio(); if(ctx.state==='suspended') ctx.resume(); }  // fallback: synteza live
+        requestWake(); phaseIdx=-1; startLoop();
+      });
+    } else {
+      buildAudio();
+      if(ctx.state==='suspended') ctx.resume();
+      requestWake(); phaseIdx=-1; startLoop();
+    }
   }
 
   function setPlaying(on){
