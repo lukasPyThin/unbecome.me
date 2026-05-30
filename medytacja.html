@@ -501,7 +501,10 @@
     var dt=Math.min(0.05, now-lastTs);
     lastTs=now;
 
-    elapsed+=dt;
+    // czas z zegara AUDIO (ctx.currentTime), nie z akumulacji klatek rAF:
+    // rAF zamarza w tle (stąd stawał zegar), a zegar audio leci z dźwiękiem i pauzuje przy suspend.
+    // Dzięki temu zegar/fazy/postęp zawsze pasują do dźwięku i synchronizują się po powrocie z tła.
+    if(ctx) elapsed = ctx.currentTime;
     if(elapsed>=TOTAL){ elapsed=TOTAL; complete(); }
 
     // która faza?
