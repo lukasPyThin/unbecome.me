@@ -341,6 +341,7 @@
 
   // ── stan ──
   var ctx=null, started=false, playing=false, finished=false, rendered=false, renderSrc=null;
+  var renderReady=false, renderFailed=false, audioBlobURL=null;  // prerender na load => audio gotowe do gry W GEŚCIE kliknięcia "wejdź"
   var elapsed=0;            // sekundy przebyte (rośnie tylko gdy gra)
   var lastTs=0;             // znacznik ostatniej klatki
   var phaseIdx=-1;
@@ -436,7 +437,7 @@
     try{
       var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
       if(!OAC){ done(null); return; }
-      var sr=(ctx&&ctx.sampleRate)||44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // renderuj w NATYWNYM sample rate odtwarzania => zero resamplingu (48000/22050=2.18 to brzydki resampling na Androidzie = glitch)
+      var sr=isSmall?24000:44100, chs=isSmall?1:2, len=Math.ceil(TOTAL*sr);  // <audio> resampluje natywnie => render w niższym SR = mniejszy plik WAV, szybszy prerender
       var oc=new OAC(chs,len,sr);
       var m=oc.createGain(); m.gain.value=1.0;
       var cp=oc.createDynamicsCompressor(); cp.threshold.value=-3;cp.knee.value=0;cp.ratio.value=20;cp.attack.value=0.002;cp.release.value=0.06;  // brickwall-limiter w renderze: nic nie przekroczy ~0 dB => zero przepaleń (popów) zapieczonych w buforze
@@ -511,6 +512,14 @@
   }
 
   function showSettling(on){ if(on){ elOver.textContent='osiadanie…'; elOver.classList.add('show'); } }
+
+  // pre-render na ładowaniu strony (w tle, gdy user czyta intro) => audioBlobURL gotowy do gry W GEŚCIE
+  function prerender(){
+    renderOffline(function(buf){
+      if(buf){ try{ audioBlobURL=URL.createObjectURL(new Blob([bufferToWav(buf)],{type:'audio/wav'})); renderReady=true; }catch(e){ renderFailed=true; } }
+      else { renderFailed=true; }
+    });
+  }
 
   // miękki dzwon — znacznik przejścia między fazami
   function bell(freq){
@@ -651,20 +660,23 @@
     elRing.classList.add('on');
     elTransport.classList.add('on');
     if(useRender){
-      // ctx potrzebny do referencji sample-rate / IR renderu i do fallbacku live. Tworzymy w geście.
-      var AC=window.AudioContext||window.webkitAudioContext;
-      ctx=new AC();
-      if(ctx.state==='suspended') ctx.resume();
-      // ODBLOKUJ <audio> W GEŚCIE: zagraj cichy WAV, żeby async play() po renderze przeszło na mobile (autoplay policy)
-      try{ var sb=ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.05), ctx.sampleRate);
-           audioEl.src=URL.createObjectURL(new Blob([bufferToWav(sb)],{type:'audio/wav'}));
-           var pp=audioEl.play(); if(pp&&pp.then) pp.then(function(){audioEl.pause();audioEl.currentTime=0;}).catch(function(){}); }catch(e){}
-      showSettling(true);                         // "osiadanie…" w czasie renderu
-      renderOffline(function(buf){
-        if(buf){ rendered=true; playRendered(buf); }
-        else { buildAudio(); if(ctx.state==='suspended') ctx.resume(); }  // fallback: synteza live na ctx
-        requestWake(); phaseIdx=-1; startLoop();
-      });
+      if(renderFailed){
+        buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume();   // render padł => synteza live
+      } else if(renderReady){
+        // audio GOTOWE => graj W GEŚCIE klika (autoplay OK, bo play() jest w handlerze kliknięcia)
+        rendered=true; audioEl.src=audioBlobURL; audioEl.volume=parseInt(elVol.value,10)/100; audioEl.play().catch(function(){});
+      } else {
+        // prerender jeszcze trwa: aktywuj <audio> W GEŚCIE cichym WAV-em, graj gdy gotowe
+        showSettling(true);
+        try{ var AC=window.AudioContext||window.webkitAudioContext; if(!ctx) ctx=new AC();
+             var sb=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.05),ctx.sampleRate);
+             audioEl.src=URL.createObjectURL(new Blob([bufferToWav(sb)],{type:'audio/wav'})); audioEl.play().catch(function(){}); }catch(e){}
+        var w=setInterval(function(){
+          if(renderReady){ clearInterval(w); rendered=true; audioEl.src=audioBlobURL; audioEl.volume=parseInt(elVol.value,10)/100; audioEl.play().catch(function(){}); }
+          else if(renderFailed){ clearInterval(w); buildAudio(); if(ctx&&ctx.state==='suspended') ctx.resume(); }
+        }, 200);
+      }
+      requestWake(); phaseIdx=-1; startLoop();
     } else {
       buildAudio();
       if(ctx.state==='suspended') ctx.resume();
@@ -739,6 +751,7 @@
   });
 
   elClock.textContent=fmt(TOTAL);
+  if(useRender){ setTimeout(prerender, 150); }   // start prerender na load (po pierwszym paincie intro)
   // pętla animacji startuje dopiero w begin() / przy wznowieniu (startLoop) — nie kręci się w tle na intro
 })();
 </script>
