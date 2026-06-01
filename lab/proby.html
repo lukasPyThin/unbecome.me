@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>próby brzmień — lab</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#15100b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#15100b;--paper:#efe7d6;--clay:#c8743f;--terra:#e08a4a;--ink:#efe7d6;--soft:#a08b73;--faint:rgba(239,231,214,0.5);--line:rgba(239,231,214,0.14);--serif:"Cormorant Garamond",Georgia,serif;--mono:"DM Mono",ui-monospace,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--mono);line-height:1.6;
+    background-image:radial-gradient(ellipse 90% 70% at 50% 20%, #241a12 0%, var(--bg) 60%, #0d0906 100%);
+    min-height:100vh;padding:clamp(40px,8vh,80px) 24px}
+  .wrap{max-width:620px;margin:0 auto}
+  .eyebrow{font-size:11px;letter-spacing:0.4em;text-transform:uppercase;color:var(--clay);margin-bottom:24px}
+  h1{font-family:var(--serif);font-weight:300;font-size:clamp(34px,6vw,52px);line-height:1.05;letter-spacing:-0.02em;margin-bottom:18px}
+  .intro{font-family:var(--serif);font-style:italic;font-size:clamp(17px,2.4vw,21px);color:var(--faint);margin-bottom:clamp(40px,7vh,64px)}
+  .proba{padding:28px 0;border-top:1px solid var(--line)}
+  .proba:last-of-type{border-bottom:1px solid var(--line)}
+  .tag{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--soft)}
+  .proba h2{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4.4vw,36px);margin:8px 0 6px;color:var(--terra)}
+  .proba .desc{font-size:13px;color:var(--paper);margin-bottom:16px;opacity:0.85}
+  audio{width:100%;height:40px;filter:sepia(0.2)}
+  .note{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--soft);margin-top:clamp(40px,7vh,60px);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">unbecome · lab · próby brzmień</div>
+  <h1>Trzy kierunki dźwięku</h1>
+  <p class="intro">Każda po 60 sekund, słuchawki na uszy. To nie finał, tylko charakter. Powiedz, który kierunek czujesz, a dostroję i wyrenderuję pełne 13 minut.</p>
+
+  <div class="proba">
+    <span class="tag">potrzeba: wyciszyć się</span>
+    <h2>osiąść</h2>
+    <p class="desc">Niskie tony, ciepło, długi wydech. Dźwięk ciągnie w dół, do ziemi. Wieczór, przed snem, reset.</p>
+    <audio controls preload="none" src="/lab/proba_osiasc.mp3"></audio>
+  </div>
+
+  <div class="proba">
+    <span class="tag">potrzeba: coś puścić</span>
+    <h2>rozpuścić</h2>
+    <p class="desc">Fala i pogłos, średnie pasmo, więcej ruchu. Dźwięk faluje i unosi. Uwolnić napięcie, emocje.</p>
+    <audio controls preload="none" src="/lab/proba_rozpuscic.mp3"></audio>
+  </div>
+
+  <div class="proba">
+    <span class="tag">potrzeba: rozjaśnić</span>
+    <h2>klarość</h2>
+    <p class="desc">Wyższe harmoniczne, lżej, jaśniej, mniej pogłosu. Dźwięk otwiera i rozświetla. Rano, przed dniem.</p>
+    <audio controls preload="none" src="/lab/proba_klarosc.mp3"></audio>
+  </div>
+
+  <p class="note">Słuchaj jednej po drugiej. Która Cię bierze?</p>
+</div>
+</body>
+</html>
