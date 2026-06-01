@@ -125,7 +125,7 @@
 
   /* ── intro / outro overlays ── */
   .veil{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:96px 30px;gap:0;
+    text-align:center;padding:96px 30px;gap:0;overflow-y:auto;
     background:radial-gradient(ellipse at 50% 50%, rgba(21,16,11,0.72) 0%, rgba(13,9,6,0.94) 100%);
     backdrop-filter:blur(2px);transition:opacity 1.1s ease, visibility 1.1s ease}
   .veil.hidden{opacity:0;visibility:hidden;pointer-events:none}
@@ -168,6 +168,16 @@
   .skip:hover{opacity:0.95;color:var(--clay)}
   .skip.on{display:inline-block}
 
+  /* wybór: czego potrzebujesz (P2 — intencja + pora dnia) */
+  .needs{margin:34px auto 4px;max-width:460px}
+  .needs-q{font-family:var(--mono);font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--soft);margin-bottom:15px}
+  .needs-opts{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+  .need{cursor:pointer;padding:10px 17px;border:1px solid var(--line);background:transparent;color:var(--faint);
+    font-family:var(--mono);font-size:12px;letter-spacing:0.04em;text-transform:lowercase;border-radius:0;
+    transition:border-color .3s,background .3s,color .3s}
+  .need:hover{border-color:var(--clay);color:var(--ink)}
+  .need.sel{border-color:var(--clay);background:rgba(200,116,63,0.12);color:var(--ink)}
+
   /* ── transport (bottom) ── */
   .transport{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:center;gap:22px;
     padding:18px 28px max(20px,env(safe-area-inset-bottom));opacity:0;transition:opacity 1s ease;pointer-events:none}
@@ -189,6 +199,7 @@
     .breath-cue{bottom:84px}
     .transport{gap:14px}
     input[type=range]{width:84px}
+    .veil{justify-content:flex-start;padding-top:72px;padding-bottom:40px}
   }
 
   /* respect reduced motion — keep it gentle */
@@ -253,6 +264,15 @@
   <p>Trzynaście minut dźwięku w 432&nbsp;Hz. Nie musisz w nic wierzyć. Wystarczy ton i Twój&nbsp;oddech.</p>
   <p>Załóż słuchawki. Ścisz światło. Usiądź albo połóż się tak, żeby ciało mogło Cię&nbsp;puścić.</p>
   <p>Nie musisz nic robić. Wystarczy, że&nbsp;zostaniesz.</p>
+  <div class="needs" id="needs">
+    <div class="needs-q">czego teraz potrzebujesz?</div>
+    <div class="needs-opts">
+      <button class="need" data-v="osiasc">wyciszyć się</button>
+      <button class="need" data-v="rozpuscic">coś puścić</button>
+      <button class="need" data-v="klarownosc">rozjaśnić</button>
+      <button class="need" data-v="auto">nie wiem, po prostu bądź</button>
+    </div>
+  </div>
   <div class="fine"><span>słuchawki</span><span class="sep"></span><span>~13 minut</span><span class="sep"></span><span>można przerwać w każdej chwili</span></div>
   <button class="enter" id="enter">wejdź <span class="a">→</span></button>
   <button class="skip" id="skip">pomiń →</button>
@@ -789,6 +809,33 @@
       e.preventDefault(); e.stopPropagation();                  // kropka liczy kliki, nie nawiguje (tekst logo nadal wraca na /)
       n++; if(tmr) clearTimeout(tmr); tmr=setTimeout(function(){ n=0; }, 1500);
       if(n>=5){ n=0; setCreator(); }
+    });
+  })();
+
+  // ── warianty audio: potrzeba + pora dnia (P2) ──
+  var chosenVariant='osiasc';
+  function timeVariant(){
+    var h=new Date().getHours();
+    if(h>=5 && h<11)  return 'klarownosc';   // rano -> rozjaśnić
+    if(h>=11 && h<18) return 'rozpuscic';    // dzień -> coś puścić
+    return 'osiasc';                          // wieczór/noc -> wyciszyć się
+  }
+  function srcFor(v){ return '/medytacja-432-'+v+'.mp3'; }
+  function setVariant(v){
+    chosenVariant = (v==='auto') ? timeVariant() : v;
+    try{ audioEl.src=srcFor(chosenVariant); audioEl.load(); }catch(e){}  // preload wybranego, gotowy do play() w geście "wejdź"
+  }
+  (function(){
+    var btns=document.querySelectorAll('.need');
+    var def=timeVariant();
+    setVariant(def);                          // pora dnia ustawia domyślny wariant + zaczyna preload
+    btns.forEach(function(b){
+      if(b.getAttribute('data-v')===def) b.classList.add('sel');
+      b.addEventListener('click', function(){
+        btns.forEach(function(x){ x.classList.remove('sel'); });
+        b.classList.add('sel');
+        setVariant(b.getAttribute('data-v'));
+      });
     });
   })();
 
