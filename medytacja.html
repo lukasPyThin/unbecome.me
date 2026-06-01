@@ -6,7 +6,7 @@
 
 <!-- SEO -->
 <title>432 Hz - przejście | medytacja integracyjna | unbecome.me</title>
-<meta name="description" content="Prowadzone przejście w 432 Hz. Dźwięk rodzi się na żywo. Raz, dla Ciebie. Trzynaście minut: osiadanie, rozpuszczenie, strojenie, wejście w nową rzeczywistość, integracja. Załóż słuchawki i zostań.">
+<meta name="description" content="Prowadzone przejście w 432 Hz. Trzynaście minut: osiadanie, rozpuszczenie, strojenie, wejście w nową rzeczywistość, integracja. Załóż słuchawki i zostań.">
 <meta name="keywords" content="432 Hz medytacja, medytacja integracyjna, przejście, kąpiel dźwiękowa online, medytacja oddechowa, unbecome">
 <meta name="author" content="Łukasz Szpiczakowski">
 <meta name="robots" content="index, follow">
@@ -19,7 +19,7 @@
 
 <!-- Open Graph -->
 <meta property="og:title" content="432 Hz - przejście | unbecome.me">
-<meta property="og:description" content="Prowadzone przejście w 432 Hz. Dźwięk rodzi się na żywo. Raz, dla Ciebie. Załóż słuchawki i zostań.">
+<meta property="og:description" content="Prowadzone przejście w 432 Hz. Trzynaście minut, ton i Twój oddech. Załóż słuchawki i zostań.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pl_PL">
 <meta property="og:url" content="https://unbecome.me/medytacja">
@@ -28,7 +28,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="432 Hz - przejście | unbecome.me">
-<meta name="twitter:description" content="Prowadzone przejście w 432 Hz. Dźwięk rodzi się na żywo. Raz, dla Ciebie.">
+<meta name="twitter:description" content="Prowadzone przejście w 432 Hz. Trzynaście minut, ton i Twój oddech.">
 <meta name="twitter:image" content="https://unbecome.me/og-image.jpg">
 
 <!-- Fonts -->
@@ -154,6 +154,19 @@
   .lnk:hover{border-color:var(--clay);color:var(--clay)}
   .lnk.solid{background:var(--clay);border-color:var(--clay);color:var(--bg)}
   .lnk.solid:hover{background:var(--terra);border-color:var(--terra);color:var(--bg)}
+  .lnk .a{display:inline-block;margin-left:7px;transition:transform .35s ease}
+  .lnk:hover .a{transform:translateX(4px)}
+
+  /* moment „strojenia" — kula budzi się, zanim dźwięk wejdzie głośniej */
+  .orb.waking{animation:orbWake 2.6s ease-in-out infinite}
+  @keyframes orbWake{0%,100%{transform:scale(0.86)}50%{transform:scale(0.93)}}
+
+  /* tryb twórcy — dyskretny skip (domyślnie ukryty) */
+  .skip{margin-top:18px;cursor:pointer;background:none;border:none;display:none;
+    font-family:var(--mono);font-size:10px;letter-spacing:0.22em;text-transform:lowercase;
+    color:var(--soft);opacity:0.5;transition:opacity .3s,color .3s}
+  .skip:hover{opacity:0.95;color:var(--clay)}
+  .skip.on{display:inline-block}
 
   /* ── transport (bottom) ── */
   .transport{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;align-items:center;justify-content:center;gap:22px;
@@ -181,6 +194,7 @@
   /* respect reduced motion — keep it gentle */
   @media (prefers-reduced-motion: reduce){
     .orb,.halo{transition:opacity 2s ease}
+    .orb.waking{animation:none}
     .grain{mix-blend-mode:normal;opacity:0.12}
   }
 
@@ -236,11 +250,12 @@
 <div class="veil" id="intro">
   <div class="eyebrow">432 Hz · przejście</div>
   <h1><em>Zanim</em><br>wejdziesz.</h1>
-  <p>To nie jest nagranie. Dźwięk rodzi się tutaj, teraz. Raz, dla&nbsp;Ciebie. Kiedy odejdziesz, zniknie.</p>
+  <p>Trzynaście minut dźwięku w 432&nbsp;Hz. Nie musisz w nic wierzyć. Wystarczy ton i Twój&nbsp;oddech.</p>
   <p>Załóż słuchawki. Ścisz światło. Usiądź albo połóż się tak, żeby ciało mogło Cię&nbsp;puścić.</p>
   <p>Nie musisz nic robić. Wystarczy, że&nbsp;zostaniesz.</p>
   <div class="fine"><span>słuchawki</span><span class="sep"></span><span>~13 minut</span><span class="sep"></span><span>można przerwać w każdej chwili</span></div>
   <button class="enter" id="enter">wejdź <span class="a">→</span></button>
+  <button class="skip" id="skip">pomiń →</button>
 </div>
 
 <!-- outro veil -->
@@ -250,7 +265,8 @@
   <p>Nie spiesz się z otwieraniem oczu. Świat poczeka, ile&nbsp;trzeba.</p>
   <p>Coś zabierasz ze sobą. To&nbsp;już Twoje.</p>
   <div class="outro-actions">
-    <button class="lnk solid" id="again">jeszcze raz</button>
+    <a class="lnk solid" href="/oddech">zostań z oddechem <span class="a">→</span></a>
+    <button class="lnk" id="again">jeszcze raz</button>
     <a class="lnk" href="/">wróć na stronę</a>
   </div>
 </div>
@@ -333,6 +349,7 @@
       elOver=$('overline'), elGuide=$('guide'), elCue=$('cue'),
       elIntro=$('intro'), elOutro=$('outro'), elEnter=$('enter'), elAgain=$('again'),
       elTransport=$('transport'), elPP=$('pp'), elPPIcon=$('ppIcon'), elVol=$('vol'), elClock=$('clock');
+  var elSkip=$('skip'), elMark=document.querySelector('.bar .mark');  // tryb twórcy
   var audioEl=$('player');  // natywne odtwarzanie HTML5 <audio> (omija glitche Web Audio na mobile)
 
   // ring geometry
@@ -348,6 +365,7 @@
   var breathT=0;            // sekundy w bieżącym cyklu oddechu (wdech+wydech)
   var curBP=11, tgtBP=11;   // długość oddechu (s) — bieżąca i docelowa
   var curBD=0.2, tgtBD=0.2; // głębia oddechu
+  var tuning=false, tuneTimer=null; // moment „strojenia" przed wejściem dźwięku
 
   // ── węzły audio ──
   var master, comp, toneFilter, dryGain, convolver, wetGain, breathBus, steadyBus, reverbIn;
@@ -654,11 +672,35 @@
     elRing.classList.add('on');
     elTransport.classList.add('on');
     try{ audioEl.currentTime=0; }catch(e){}
-    audioEl.volume=parseInt(elVol.value,10)/100;
-    audioEl.play().catch(function(){});   // hostowany plik MP3, play() W GEŚCIE klika => gra wszędzie (zero renderu/autoplay-problemów)
+    audioEl.volume=0;                     // start w ciszy — dźwięk narasta podczas „strojenia"
+    audioEl.play().catch(function(){});   // play() W GEŚCIE kliknięcia "wejdź" => gra wszędzie (zero autoplay-problemów)
     requestWake();
     phaseIdx=-1;
-    startLoop();
+    tune();                                // rytuał strojenia, potem pętla + narastanie głośności
+  }
+
+  // moment „strojenia": kula budzi się, słowa schodzą, dźwięk wynurza się z ciszy
+  function tune(){
+    tuning=true;
+    elOrb.classList.add('waking');
+    var words=['strojenie…','oddech…','cisza…'], wi=0;
+    setOverline(words[0]);
+    var wIv=setInterval(function(){ wi++; if(wi<words.length) setOverline(words[wi]); else clearInterval(wIv); }, 1700);
+    tuneTimer=setTimeout(function(){
+      tuneTimer=null; tuning=false;
+      elOrb.classList.remove('waking');
+      fadeVolumeTo(parseInt(elVol.value,10)/100, 2400);  // dźwięk wchodzi miękko
+      startLoop();                                        // normalna pętla przejmuje (faza I + prowadzenie)
+    }, 5400);
+  }
+
+  function fadeVolumeTo(target, ms){
+    var start=audioEl.volume||0, t0=performance.now();
+    (function step(){
+      var k=Math.min(1,(performance.now()-t0)/ms);
+      audioEl.volume=Math.max(0,Math.min(1, start+(target-start)*k));
+      if(k<1) requestAnimationFrame(step);
+    })();
   }
 
   function setPlaying(on){
@@ -717,6 +759,38 @@
   document.addEventListener('keydown', function(e){
     if(e.code==='Space' && started && !finished){ e.preventDefault(); setPlaying(!playing); }
   });
+
+  // ── tryb twórcy: pomiń przejście, od razu wyjście (tylko Łukasz) ──
+  function skipToEnd(){
+    if(tuneTimer){ clearTimeout(tuneTimer); tuneTimer=null; }
+    tuning=false;
+    try{ audioEl.pause(); }catch(e){}
+    started=true; finished=true; playing=false;
+    elOrb.classList.remove('waking');
+    elCue.classList.remove('show');
+    elGuide.classList.remove('show');
+    elOver.classList.remove('show');
+    elIntro.classList.add('hidden');
+    elTransport.classList.remove('on');
+    elRing.classList.remove('on');
+    elOutro.classList.remove('hidden');
+    releaseWake();
+  }
+  function isCreator(){ try{ return localStorage.getItem('unbecome_creator')==='1'; }catch(e){ return false; } }
+  function setCreator(){ try{ localStorage.setItem('unbecome_creator','1'); }catch(e){} if(elSkip) elSkip.classList.add('on'); }
+  if(/[?&]luka\b/.test(location.search)) setCreator();          // trigger 1: ?luka w adresie
+  if(isCreator() && elSkip) elSkip.classList.add('on');
+  if(elSkip) elSkip.addEventListener('click', skipToEnd);
+  (function(){                                                   // trigger 2: 5 klików w kropkę logo
+    if(!elMark) return;
+    var dot=elMark.querySelector('.dot'); if(!dot) return;
+    var n=0, tmr=null;
+    dot.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();                  // kropka liczy kliki, nie nawiguje (tekst logo nadal wraca na /)
+      n++; if(tmr) clearTimeout(tmr); tmr=setTimeout(function(){ n=0; }, 1500);
+      if(n>=5){ n=0; setCreator(); }
+    });
+  })();
 
   elClock.textContent=fmt(TOTAL);
   // pętla animacji startuje dopiero w begin() / przy wznowieniu (startLoop) — nie kręci się w tle na intro
