@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO -->
+  <title>circle - unbecome.me | body, breath and presence</title>
+  <meta name="description" content="Sometimes I'll send something here. A short morning practice, a session date, a sentence that came back. No schedule, no noise. Leave your email.">
+  <meta name="author" content="Łukasz Szpiczakowski">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://unbecome.me/en/circle">
+
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="pl" href="https://unbecome.me/krag">
+  <link rel="alternate" hreflang="en" href="https://unbecome.me/en/circle">
+  <link rel="alternate" hreflang="x-default" href="https://unbecome.me/krag">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="circle - unbecome.me">
+  <meta property="og:description" content="Sometimes I'll send something here. No schedule, no noise. Leave your email.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:url" content="https://unbecome.me/en/circle">
+  <meta property="og:site_name" content="unbecome.me - Łukasz Szpiczakowski">
+  <meta property="og:image" content="https://unbecome.me/og-image.jpg">
+
+  <meta name="theme-color" content="#efe7d6">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%C5%81</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: only light;
+    --bg:#efe7d6;
+    --bg-2:#e6dac4;
+    --paper:#f7f0df;
+    --clay:#b35b35;
+    --ochre:#c98a4a;
+    --terra:#9b4a2a;
+    --ink:#1f1814;
+    --ink-2:#3d2f24;
+    --soft:#5a4736;
+    --line:rgba(31,24,20,0.16);
+    --serif:"Cormorant Garamond",Georgia,serif;
+    --mono:"DM Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-weight:400;-webkit-font-smoothing:antialiased}
+  html{scroll-behavior:smooth}
+  body{overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--clay);color:var(--paper)}
+
+  /* breathing background overlay */
+  .breath-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,var(--paper) 0%,var(--bg) 60%,var(--bg-2) 100%);animation:bgbreathe 12s ease-in-out infinite}
+  @keyframes bgbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+  .grain-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.45;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.13 0 0 0 0 0.09 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+  main,nav,footer{position:relative;z-index:2}
+
+  /* nav (minimal, top) */
+  .nav{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:24px 36px 18px;z-index:60;background:linear-gradient(to bottom,var(--bg) 60%,transparent)}
+  .nav .mark{font-family:var(--serif);font-style:italic;font-size:24px;font-weight:400;letter-spacing:-0.01em;display:inline-flex;align-items:baseline;gap:0}
+  .nav .mark .mark-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--clay);margin:0 3px 0 2px;transform:translateY(1px);animation:pulse 4s ease-in-out infinite;transform-origin:center;align-self:baseline}
+  .nav .mark .mark-tld{font-family:var(--serif);font-style:italic;font-size:24px;letter-spacing:-0.01em;color:inherit;align-self:baseline}
+  @keyframes pulse{0%,100%{transform:translateY(1px) scale(1);opacity:0.8}50%{transform:translateY(1px) scale(1.5);opacity:1}}
+  .nav-links{display:flex;gap:24px;font-family:var(--mono);font-size:11px;text-transform:lowercase;letter-spacing:0.1em;color:var(--soft);align-items:center}
+  .nav-links a{padding:4px 0;border-bottom:1px solid transparent;transition:border-color .3s,color .3s}
+  .nav-links a:hover{color:var(--clay);border-color:var(--clay)}
+  .nav-links a.lang{text-transform:uppercase;letter-spacing:0.18em}
+
+  /* layout: centered single panel */
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:140px 36px 80px}
+  .krag-inner{max-width:600px;width:100%;text-align:center}
+
+  .section-meta{display:flex;justify-content:center;align-items:baseline;gap:14px;font-family:var(--mono);font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--soft);padding-bottom:18px;margin-bottom:56px;border-bottom:1px solid var(--line)}
+  .section-meta .num{color:var(--clay)}
+
+  h1{font-family:var(--serif);font-weight:300;font-size:clamp(56px,11vw,120px);line-height:0.92;letter-spacing:-0.035em;margin-bottom:40px}
+  h1 em{font-style:italic;color:var(--terra)}
+
+  .lead{font-family:var(--serif);font-style:italic;font-weight:300;font-size:26px;line-height:1.45;color:var(--ink-2);margin-bottom:32px}
+  p.body{font-family:var(--serif);font-weight:300;font-size:21px;line-height:1.55;color:var(--ink-2);margin-bottom:24px}
+  p.body.invite{color:var(--terra)}
+
+  /* breath dot divider */
+  .breath-divider{width:8px;height:8px;border-radius:50%;background:var(--clay);margin:48px auto;animation:breath 6s ease-in-out infinite}
+  @keyframes breath{0%,100%{transform:scale(0.7);opacity:0.5}50%{transform:scale(1.4);opacity:1}}
+
+  /* form */
+  .form{display:flex;flex-direction:column;gap:28px;text-align:left;max-width:460px;margin:0 auto}
+  .field{display:flex;flex-direction:column;gap:8px;position:relative}
+  .field label{font-family:var(--mono);font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--clay)}
+  .field input{background:transparent;border:none;border-bottom:1px solid var(--line);padding:12px 0;font-family:var(--serif);font-size:18px;font-weight:300;color:var(--ink);outline:none;transition:border-color .3s,box-shadow .3s;width:100%}
+  .field input::placeholder{color:rgba(31,24,20,0.3);font-style:italic}
+  .field input:focus{border-color:var(--clay);box-shadow:0 1px 0 0 var(--clay)}
+  .consent{display:flex;gap:12px;align-items:flex-start;padding:4px 0;font-family:var(--serif);font-size:14px;line-height:1.5;color:var(--soft);cursor:pointer}
+  .consent input[type=checkbox]{margin-top:5px;accent-color:var(--clay);flex-shrink:0;cursor:pointer;width:16px;height:16px}
+  .consent a{color:var(--clay);text-decoration:underline;text-underline-offset:2px}
+  .consent a:hover{color:var(--terra)}
+  .form-status{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--terra);min-height:22px;opacity:0;transition:opacity .3s}
+  .form-status.visible{opacity:1}
+
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;font-family:var(--mono);font-size:12px;letter-spacing:0.12em;text-transform:lowercase;cursor:pointer;border:none;transition:all .3s ease;border-radius:0}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-primary:hover{background:var(--terra)}
+  .btn .arrow{transition:transform .3s}
+  .btn:hover .arrow{transform:translateX(4px)}
+  .form .btn{align-self:flex-start;margin-top:8px}
+
+  footer{padding:48px 36px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--soft);text-transform:lowercase}
+
+  @media (max-width:900px){
+    .nav{padding:16px 20px}
+    main{padding:120px 24px 60px}
+    h1{margin-bottom:32px}
+    footer{flex-direction:column;gap:8px;text-align:center;padding:36px 24px}
+    .btn{padding:16px 32px;font-size:12px;min-height:48px}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;scroll-behavior:auto !important}
+    .breath-bg{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="breath-bg"></div>
+<div class="grain-overlay"></div>
+
+<nav class="nav">
+  <a href="/en/" class="mark" aria-label="unbecome.me - home">unbecome<span class="mark-dot"></span><span class="mark-tld">me</span></a>
+  <div class="nav-links">
+    <a href="/en/">home</a>
+    <a href="/krag" class="lang" hreflang="pl">PL</a>
+  </div>
+</nav>
+
+<main>
+  <div class="krag-inner">
+    <div class="section-meta"><span><span class="num">/circle</span> &nbsp; circle</span></div>
+    <h1><em>circle</em></h1>
+    <p class="lead">Sometimes I'll send something here.</p>
+    <p class="body">I don't know when. A short morning practice. A session date, when one opens up. A sentence that came back to me. No schedule. No noise.</p>
+    <p class="body invite">Leave your email. I'll write when there's a reason.</p>
+
+    <div class="breath-divider" aria-hidden="true"></div>
+
+    <form class="form" id="circle-form" action="/api/contact" method="POST">
+      <input type="hidden" name="event" value="[CIRCLE-EN]">
+      <p style="position:absolute;left:-9999px"><label>Do not fill this in: <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
+      <div class="field">
+        <label for="circle-email">Email</label>
+        <input type="email" id="circle-email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" required>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="zgoda" id="circle-zgoda" required>
+        <span>You're leaving me your email so I can send something now and then. I process it for that purpose only. I don't pass it on, and you can unsubscribe at any time. Full <a href="/polityka-prywatnosci.html">privacy policy</a>. I agree.</span>
+      </label>
+      <div class="form-status" id="circle-status"></div>
+      <button type="submit" class="btn btn-primary">join <span class="arrow">→</span></button>
+    </form>
+  </div>
+</main>
+
+<footer>
+  <div>Wrocław</div>
+  <div>body and presence work</div>
+  <div>© 2026 Łukasz · <a href="/polityka-prywatnosci.html" style="color:inherit;text-decoration:underline;text-underline-offset:2px">privacy policy</a></div>
+</footer>
+
+<script>
+  const form = document.getElementById('circle-form');
+  const status = document.getElementById('circle-status');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.textContent = 'sending...';
+    status.classList.add('visible');
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data.ok) {
+        status.textContent = 'you are in the circle. I will write when there is a reason.';
+        form.reset();
+      } else {
+        status.textContent = data.error || 'something went wrong. write directly to lukasz@unbecome.me';
+      }
+    } catch (err) {
+      status.textContent = 'something went wrong. write directly to lukasz@unbecome.me';
+    }
+  });
+</script>
+</body>
+</html>
