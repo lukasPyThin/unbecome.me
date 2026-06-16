@@ -24,6 +24,7 @@
     --bg:#15100b;
     --paper:#efe7d6;
     --clay:#c8743f;
+    --clay-soft:#b35b35;
     --ochre:#d99a55;
     --terra:#e08a4a;
     --ink:#efe7d6;
@@ -96,12 +97,58 @@
     padding:14px 26px;border:1px solid var(--line);transition:border-color .3s,color .3s}
   .back:hover{border-color:var(--clay);color:var(--clay)}
 
+  /* ── pacer oddechu (praktyka 01: wdech 4 / wydech 6 × 5, prowadzony) ── */
+  .pacer-go{margin-top:22px;display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+    padding:12px 22px;border:1px solid var(--line);background:transparent;color:var(--soft);
+    font-family:var(--mono);font-size:12px;letter-spacing:0.16em;text-transform:lowercase;
+    transition:border-color .3s,color .3s}
+  .pacer-go:hover{border-color:var(--clay);color:var(--clay)}
+  .pacer-go .a{transition:transform .35s ease}
+  .pacer-go:hover .a{transform:translateX(4px)}
+
+  .pacer{display:flex;flex-direction:column;align-items:center;gap:18px;
+    max-height:0;opacity:0;overflow:hidden;visibility:hidden;
+    transition:max-height .6s ease,opacity .6s ease,margin .6s ease,visibility 0s linear .6s}
+  .pacer.on{max-height:440px;opacity:1;margin:30px 0 6px;visibility:visible;
+    transition:max-height .6s ease,opacity .6s ease,margin .6s ease,visibility 0s}
+
+  .pacer-orb-btn{position:relative;width:min(200px,52vw);height:min(200px,52vw);
+    border:none;background:none;padding:0;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .pacer-orb-btn:focus-visible{outline:1px solid var(--clay);outline-offset:8px}
+  .pring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible;
+    opacity:0;transition:opacity .9s ease}
+  .pring.show{opacity:0.85}
+  .ptrack{fill:none;stroke:rgba(239,231,214,0.10);stroke-width:1}
+  .pprog{fill:none;stroke:var(--clay);stroke-width:1.5;stroke-linecap:round;
+    filter:drop-shadow(0 0 5px rgba(200,116,63,0.5));transition:stroke-dashoffset .2s linear}
+  .porb{position:relative;width:62%;height:62%;border-radius:50%;
+    background:radial-gradient(circle at 50% 42%,#f6d9af 0%,var(--ochre) 26%,var(--clay) 55%,var(--clay-soft) 78%,rgba(120,52,26,0) 100%);
+    box-shadow:0 0 40px 8px rgba(200,116,63,0.28),inset 0 0 30px rgba(255,224,180,0.32);
+    will-change:transform,opacity;transform:scale(0.82);opacity:0.85}
+  .porb-core{position:absolute;inset:30%;border-radius:50%;
+    background:radial-gradient(circle,#fbe99f 0%,rgba(251,233,159,0) 70%);mix-blend-mode:screen}
+  .phalo{position:absolute;width:150%;height:150%;border-radius:50%;
+    background:radial-gradient(circle,rgba(200,116,63,0.16) 0%,rgba(200,116,63,0) 60%);
+    will-change:transform,opacity;pointer-events:none;opacity:0.35}
+  .pacer-cue{font-family:var(--mono);font-size:11px;letter-spacing:0.4em;text-transform:uppercase;
+    color:var(--soft);min-height:1.3em;opacity:0.85;text-align:center}
+  .pacer.done .pacer-cue{font-family:var(--serif);font-style:italic;font-size:19px;
+    letter-spacing:0;text-transform:none;color:var(--faint)}
+  .pacer-count{font-family:var(--mono);font-size:11px;letter-spacing:0.3em;color:var(--clay);
+    min-height:1.2em;opacity:0.8;font-variant-numeric:tabular-nums}
+
   @media (prefers-reduced-motion: reduce){
     .breathe{animation:none;transform:scale(1)}
     html{scroll-behavior:auto}
+    .pacer{transition:none}
+    .porb{transform:scale(0.92)}
+    .phalo,.pring{display:none}
   }
   @media (pointer:coarse),(max-width:600px){
     .grain{mix-blend-mode:normal;opacity:0.1}
+    .porb-core{mix-blend-mode:normal;opacity:0.45}
+    .pprog{filter:none}
   }
 </style>
 </head>
@@ -127,6 +174,19 @@
       <h2>Wydech dłuższy niż wdech</h2>
       <p class="why">Układ nerwowy czyta długi wydech jako „jestem bezpieczny".</p>
       <p class="how">Wdech nosem na cztery. Wydech ustami na sześć. Nic na siłę. Pięć razy.</p>
+      <button class="pacer-go" id="pacerGo" type="button" aria-expanded="false" aria-controls="pacer">oddychaj ze mną <span class="a">→</span></button>
+      <div class="pacer" id="pacer">
+        <button class="pacer-orb-btn" id="pacerOrb" type="button" aria-label="pauza albo wznów">
+          <svg class="pring" id="pRing" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ptrack" cx="60" cy="60" r="56"></circle>
+            <circle class="pprog" id="pProg" cx="60" cy="60" r="56"></circle>
+          </svg>
+          <span class="phalo" id="pHalo"></span>
+          <span class="porb" id="pOrb"><span class="porb-core"></span></span>
+        </button>
+        <p class="pacer-cue" id="pCue" aria-hidden="true"></p>
+        <p class="pacer-count" id="pCount" aria-hidden="true"></p>
+      </div>
     </li>
     <li>
       <span class="num">02</span>
@@ -148,6 +208,113 @@
     <a class="back" href="/">← wróć na stronę</a>
   </div>
 </main>
+
+<script>
+(function(){
+  "use strict";
+  // pacer oddechu — jeden silnik rAF z zegarem odpornym na tło.
+  // 4s wdech / 6s wydech (krzywa cosine, BEZ holdu — „nic na siłę") × 5 cykli, potem spoczynek.
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var go    = document.getElementById('pacerGo'),
+      panel = document.getElementById('pacer'),
+      orbBtn= document.getElementById('pacerOrb'),
+      orb   = document.getElementById('pOrb'),
+      halo  = document.getElementById('pHalo'),
+      ring  = document.getElementById('pRing'),
+      prog  = document.getElementById('pProg'),
+      cue   = document.getElementById('pCue'),
+      count = document.getElementById('pCount');
+  if(!go || !panel) return;
+
+  var IN=4, OUT=6, CYC=IN+OUT, TARGET=5, TOTAL=CYC*TARGET;   // 50 s
+  var R=56, C=2*Math.PI*R;
+  prog.style.strokeDasharray=C; prog.style.strokeDashoffset=C;
+
+  // zegar: elapsed = acc + (czas bieżącego segmentu, tylko gdy running).
+  // halt() zatrzaskuje elapsed do acc — tab w tle / pauza / koniec NIE gubi i NIE przeskakuje czasu.
+  var running=false, userPaused=false, done=false, bgHidden=false;
+  var acc=0, segStart=0, raf=0, prepTimer=0, lastPhase='', lastCycle=-1;
+
+  function clock(){ return performance.now()/1000; }
+  function elapsed(){ return acc + (running ? clock()-segStart : 0); }
+  function run(){ if(running) return; running=true; segStart=clock(); raf=requestAnimationFrame(frame); }
+  function halt(){ if(!running) return; acc=elapsed(); running=false; cancelAnimationFrame(raf); }
+
+  function render(e){
+    var cyc=Math.floor(e/CYC); if(cyc>=TARGET) cyc=TARGET-1;
+    var tin=e-cyc*CYC, rising=tin<IN;
+    var b = rising ? (1-Math.cos((tin/IN)*Math.PI))/2
+                   : (1+Math.cos(((tin-IN)/OUT)*Math.PI))/2;
+    if(!reduced){
+      orb.style.transform='scale('+(0.82+b*0.30).toFixed(3)+')';
+      orb.style.opacity=(0.78+b*0.20).toFixed(3);
+      halo.style.transform='scale('+(1+b*0.12).toFixed(3)+')';
+      halo.style.opacity=(0.35+b*0.5).toFixed(3);
+      prog.style.strokeDashoffset=(C*(1-e/TOTAL)).toFixed(1);
+    }
+    var ph = rising ? 'wdech' : 'wydech';
+    if(ph!==lastPhase){ lastPhase=ph; cue.textContent=ph; }
+    if(cyc!==lastCycle){ lastCycle=cyc; count.textContent=(cyc+1)+' / '+TARGET; }
+  }
+
+  function frame(){
+    if(!running) return;
+    var e=elapsed();
+    if(e>=TOTAL){ finish(); return; }
+    render(e);
+    raf=requestAnimationFrame(frame);
+  }
+
+  function begin(){
+    done=false; userPaused=false; bgHidden=false; acc=0; lastPhase=''; lastCycle=-1;
+    panel.classList.remove('done');
+    if(ring) ring.classList.add('show');
+    cue.textContent=''; count.textContent='';
+    orbBtn.setAttribute('aria-label','pauza albo wznów');
+    if(!reduced){ orb.style.transform='scale(0.82)'; orb.style.opacity='0.85'; halo.style.opacity='0.35'; }
+    // beat „przygotowania": panel zdąży się rozwinąć, pierwszy wdech jest w pełni widoczny
+    if(prepTimer) clearTimeout(prepTimer);
+    prepTimer=setTimeout(function(){ prepTimer=0; run(); }, 1100);
+  }
+
+  function finish(){
+    halt(); done=true;
+    if(prepTimer){ clearTimeout(prepTimer); prepTimer=0; }
+    panel.classList.add('done');
+    if(ring) ring.classList.remove('show');
+    if(!reduced){ orb.style.transform='scale(0.9)'; orb.style.opacity='0.6'; halo.style.opacity='0'; }
+    cue.textContent='gotowe'; count.textContent='';
+    orbBtn.setAttribute('aria-label','zacznij jeszcze raz');
+    go.textContent='oddychaj jeszcze raz ';
+    var a=document.createElement('span'); a.className='a'; a.textContent='→'; go.appendChild(a);
+    go.style.display='inline-flex'; go.setAttribute('aria-expanded','false');
+  }
+
+  function open(){
+    go.style.display='none'; go.setAttribute('aria-expanded','true');
+    panel.classList.add('on');
+    begin();
+  }
+
+  go.addEventListener('click', open);
+
+  orbBtn.addEventListener('click', function(){
+    if(done){ open(); return; }                 // koniec → zacznij od nowa
+    if(prepTimer) return;                        // ignoruj w trakcie beatu przygotowania
+    if(userPaused){ userPaused=false; cue.textContent=lastPhase||'wdech'; run(); }
+    else { userPaused=true; halt(); cue.textContent='pauza'; }
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      if(running){ bgHidden=true; halt(); }      // tab w tle: zatrzaśnij czas, wznów po powrocie
+    } else if(bgHidden){
+      bgHidden=false;
+      if(!userPaused && !done) run();
+    }
+  });
+})();
+</script>
 
 <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "d65105a97f7c40d2a10ae46d696dd0d4"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
